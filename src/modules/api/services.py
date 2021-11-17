@@ -9,7 +9,7 @@ from dataclasses import dataclass
 class _ContriesAndOperatorsResponse:
     id: int
     name: str
-    operators: List[Dict[str | any: str | any]]
+    operators: List[Dict[str, str]]
 
 
 @dataclass
