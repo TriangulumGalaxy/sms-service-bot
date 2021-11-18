@@ -1,9 +1,24 @@
 from aiogram import executor
-from apps import dp
+from apps import dp, db
 # from apps import _filters
+
+async def flush_all():
+    print('Очистка базы...')
+    await db.gino.drop_all()
+    print('Готово')
+    print('Создание таблиц...')
+    await db.gino.create_all()
+    print('Готово')
 
 async def on_startup(dp):
     print("bot has started")
+    
+    from modules.db import database
+
+    print('Подключение к базе данных...')
+    await database.on_startup(dp)
+    print('Подключение установлено')
+    await flush_all()
 
 def bind_filters(dp, *args):
     """
