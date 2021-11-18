@@ -6,4 +6,4 @@ class AcceptingRegistration(StatesGroup):
     """
     
     accepting_reg = State()
-    
+    language = State()
