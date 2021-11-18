@@ -1,5 +1,6 @@
 import json
-from typing import Dict, List
+from logging import exception
+from typing import Dict, List, Optional, Union
 from aiohttp import ClientSession
 from modules.config.env_config import API_KEY, LANG
 from dataclasses import dataclass
@@ -20,6 +21,8 @@ class _ServicesAndCostsResponse:
     quantity: int
 
 
+exceptions = ('NO_BALANCE', 'ACCESS_CANCEL',
+              'ACCESS_RETRY_GET', 'ACCESS_ACTIVATION')
 API_URL = "https://sms-service-online.com/stubs/handler_api?api_key={API_KEY}&lang={LANG}&action={ACTION}"
 
 
@@ -33,7 +36,7 @@ async def get_balance(api_key: str = API_KEY, lang: str = LANG) -> float:
     return float(response)
 
 
-async def get_country_and_operators(api_key: str = API_KEY, lang: str = LANG) -> _ContriesAndOperatorsResponse:
+async def get_country_and_operators(api_key: str = API_KEY, lang: str = LANG) -> List[_ContriesAndOperatorsResponse]:
     """
     action: `getCountryAndOperators`
     """
@@ -43,7 +46,7 @@ async def get_country_and_operators(api_key: str = API_KEY, lang: str = LANG) ->
     return json_response
 
 
-async def get_services_and_cost(operator: str, country: int, api_key: str = API_KEY, lang: str = LANG) -> _ServicesAndCostsResponse:
+async def get_services_and_cost(operator: str, country: int, api_key: str = API_KEY, lang: str = LANG) -> List[_ServicesAndCostsResponse]:
     """
     action: `getServicesAndCost`
     """
@@ -53,12 +56,15 @@ async def get_services_and_cost(operator: str, country: int, api_key: str = API_
     return json_response
 
 
-async def get_number(service, operator, country, api_key: str = API_KEY, lang: str = LANG) -> object:
+async def get_number(service: str, operator: str, country: int, api_key: str = API_KEY, lang: str = LANG) -> Union[object, str]:
     """
     action: `getNumber`
     """
     async with ClientSession() as session:
         async with session.get(f"{API_URL.format(API_KEY=api_key, LANG=lang, ACTION='getNumber')}&service={service}&operator={operator}&country={country}") as res:
+            text = await res.text()
+            if text in exceptions:
+                return text
             json_response = json.loads(await res.text())
     return json_response
 
