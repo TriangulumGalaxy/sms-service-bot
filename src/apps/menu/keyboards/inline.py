@@ -51,14 +51,14 @@ page_callback = CallbackData('pageination', 'page', 'action')
 service_callback = CallbackData('services', 'name', 'price', 'quantity')
 
 
-async def get_services_and_costs_keyboard(page: int = 1) -> InlineKeyboardMarkup:
+async def get_services_and_costs_keyboard(operator: str, country: int, page: int = 1) -> InlineKeyboardMarkup:
 
     keyboard = InlineKeyboardMarkup(row_width=3)
     # data = await get_services_and_cost(operator='tele2', country=0)
     # data = list(filter(lambda x: int(x.get('quantity')) != 0, await get_services_and_cost(operator='tele2', country=0)))
     data = chunks(
         list(filter(lambda x: int(x.get('quantity')) != 0,
-                    await get_services_and_cost(operator='tele2', country=0))),  # Получение оператора и страны из БД
+                    await get_services_and_cost(operator=operator, country=country))),  # Получение оператора и страны из БД
         10)
 
     if len(data) <= page - 1:
