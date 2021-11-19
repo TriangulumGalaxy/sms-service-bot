@@ -4,6 +4,7 @@ from apps.root import dp
 from aiogram.types import Message, CallbackQuery
 from .keyboards import get_countries_and_operators_keyboard, lang_keyboard, boolean_keyboard, get_countries_and_operators_keyboard, pagination_callback, get_operators_keyboard, langs
 from .states import AcceptingRegistration
+from modules.db.schemas import user
 
 
 @dp.message_handler(commands=['start'])
@@ -16,7 +17,7 @@ async def start_cmd(message: Message, state: FSMContext):
 async def choose_lang(message: Message, state: FSMContext):
     if message.text in langs:
         await message.answer(f"Вы выбрали {message.text.lower()[:-3]} язык")
-        # Здесь должно быть добавление в бд языка пользователя
+        await user.add(message.chat.id, message.text[:-3])
         await message.answer("Зарегистрированы ли вы на смс сервисе?", reply_markup=boolean_keyboard)
 
 
@@ -71,3 +72,4 @@ async def check_api_key(message: Message, state: FSMContext):
                 await message.answer(f"Ошибка")
             else:
                 await message.answer(f'API ключ подключен. Ваш баланс: {await resp.text()}')
+                await user.update(message.chat.id, api_key=message.text.strip())

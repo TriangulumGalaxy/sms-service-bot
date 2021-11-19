@@ -23,7 +23,7 @@ async def connect_db():
 
 async def on_startup(dp):
     print("bot has started")
-    # await connect_db()
+    await connect_db()
 
 def bind_filters(dp, *args):
     """
