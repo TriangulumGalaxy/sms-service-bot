@@ -14,6 +14,7 @@ class User(db.BaseModel):
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     user_id = Column(BigInteger, unique=True)
+    lang = Column(String(100))
     api_key = Column(String(100))
     country_id = Column(Integer)
     country = Column(String(100))
@@ -33,11 +34,13 @@ async def select_all() -> list:
     all_users = await User.query.gino.all()
     return all_users
 
-async def add(user_id: int, api_key: str, country_id: int, country: str, operator: str, service: str):
+
+async def add(user_id: int, lang: str, api_key: str = None, country_id: int = None, country: str = None, operator: str = None, service: str = None):
     """
     Функция для добавления пользователя в бд
 
     `user_id`: ID пользователя в Telegram\n
+    `lang`: Язык, который выбрал пользователь\n
     `api_key`: API ключ пользователя, который он вводил при регистрации\n
     `country_id`: ID страны, которую выбрал пользователь\n
     `country`: Страна, которую выбрал пользователь\n
@@ -46,10 +49,12 @@ async def add(user_id: int, api_key: str, country_id: int, country: str, operato
     """
 
     try:
-        user = User(user_id=user_id, api_key=api_key, country_id=country_id, country=country, operator=operator, service=service, created_at=datetime.now(), updated_at=datetime.now())
+        user = User(user_id=user_id, lang=lang, api_key=api_key, country_id=country_id, country=country,
+                    operator=operator, service=service, created_at=datetime.now(), updated_at=datetime.now())
         await user.create()
     except UniqueViolationError:
         pass
+
 
 async def select(user_id: int) -> User:
     """
@@ -61,11 +66,13 @@ async def select(user_id: int) -> User:
     user = await User.query.where(User.user_id == user_id).gino.first()
     return user
 
-async def update(id: int, user_id: int, api_key: str, country_id: int, country: str, operator: str, service: str) -> None:
+
+async def update(id: int, user_id: int, lang: str, api_key: str, country_id: int, country: str, operator: str, service: str) -> None:
     """
     Функция для обновления записи о пользователе в бд
 
     `id`: ID пользователя в БД\n
+    `lang`: Язык, который выбрал пользователь\n
     `api_key`: API ключ пользователя, который он вводил при регистрации\n
     `country_id`: ID страны, которую выбрал пользователь\n
     `country`: Страна, которую выбрал пользователь\n
@@ -76,6 +83,8 @@ async def update(id: int, user_id: int, api_key: str, country_id: int, country: 
     user = await User.get(id)
     if user_id is not None:
         await user.update(user_id=user_id, updated_at=datetime.now()).apply()
+    if lang is not None:
+        await user.update(lang=lang, updated_at=datetime.now()).apply()
     if api_key is not None:
         await user.update(api_key=api_key, updated_at=datetime.now()).apply()
     if country_id is not None:
@@ -96,4 +105,3 @@ async def delete(user_id: int) -> None:
     """
     user = await User.query.where(User.user_id == user_id).gino.first()
     await user.delete()
-    
