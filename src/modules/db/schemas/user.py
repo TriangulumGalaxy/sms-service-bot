@@ -67,11 +67,11 @@ async def select(user_id: int) -> User:
     return user
 
 
-async def update(id: int, user_id: int, lang: str, api_key: str, country_id: int, country: str, operator: str, service: str) -> None:
+async def update(user_id: int, lang: str = None, api_key: str = None, country_id: int = None, country: str = None, operator: str = None, service: str = None) -> None:
     """
     Функция для обновления записи о пользователе в бд
 
-    `id`: ID пользователя в БД\n
+    `user_id`: ID пользователя в Telegram\n
     `lang`: Язык, который выбрал пользователь\n
     `api_key`: API ключ пользователя, который он вводил при регистрации\n
     `country_id`: ID страны, которую выбрал пользователь\n
@@ -80,9 +80,7 @@ async def update(id: int, user_id: int, lang: str, api_key: str, country_id: int
     `service`: Сервис, который выбрал пользователь
     """
 
-    user = await User.get(id)
-    if user_id is not None:
-        await user.update(user_id=user_id, updated_at=datetime.now()).apply()
+    user = await User.query.where(User.user_id == user_id).gino.first()
     if lang is not None:
         await user.update(lang=lang, updated_at=datetime.now()).apply()
     if api_key is not None:
