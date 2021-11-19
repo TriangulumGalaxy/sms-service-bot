@@ -73,3 +73,4 @@ async def check_api_key(message: Message, state: FSMContext):
             else:
                 await message.answer(f'API ключ подключен. Ваш баланс: {await resp.text()}')
                 await user.update(message.chat.id, api_key=message.text.strip())
+                await state.finish()
