@@ -20,6 +20,8 @@ class User(db.BaseModel):
     country = Column(String(100))
     operator = Column(String(100))
     service = Column(String(100))
+    order_id = Column(BigInteger)
+    phone_number = Column(String(100))
     created_at = Column(DateTime)
     updated_at = Column(DateTime)
 
@@ -35,7 +37,7 @@ async def select_all() -> list:
     return all_users
 
 
-async def add(user_id: int, lang: str, api_key: str = None, country_id: int = None, country: str = None, operator: str = None, service: str = None):
+async def add(user_id: int, lang: str, api_key: str = None, country_id: int = None, country: str = None, operator: str = None, service: str = None, order_id: str = None, phone_number: str = None):
     """
     Функция для добавления пользователя в бд
 
@@ -45,12 +47,14 @@ async def add(user_id: int, lang: str, api_key: str = None, country_id: int = No
     `country_id`: ID страны, которую выбрал пользователь\n
     `country`: Страна, которую выбрал пользователь\n
     `operator`: Оператор связи, которого выбрал пользователь\n
-    `service`: Сервис, который выбрал пользователь
+    `service`: Сервис, который выбрал пользователь\n
+    `order_id`: ID заказа номера телефона\n
+    `phone_number`: Заказанный номер телефона
     """
 
     try:
         user = User(user_id=user_id, lang=lang, api_key=api_key, country_id=country_id, country=country,
-                    operator=operator, service=service, created_at=datetime.now(), updated_at=datetime.now())
+                    operator=operator, service=service, order_id=order_id, phone_number=phone_number, created_at=datetime.now(), updated_at=datetime.now())
         await user.create()
     except UniqueViolationError:
         pass
@@ -67,7 +71,7 @@ async def select(user_id: int) -> User:
     return user
 
 
-async def update(user_id: int, lang: str = None, api_key: str = None, country_id: int = None, country: str = None, operator: str = None, service: str = None) -> None:
+async def update(user_id: int, lang: str = None, api_key: str = None, country_id: int = None, country: str = None, operator: str = None, service: str = None, order_id: str = None, phone_number: str = None) -> None:
     """
     Функция для обновления записи о пользователе в бд
 
@@ -77,7 +81,9 @@ async def update(user_id: int, lang: str = None, api_key: str = None, country_id
     `country_id`: ID страны, которую выбрал пользователь\n
     `country`: Страна, которую выбрал пользователь\n
     `operator`: Оператор связи, которого выбрал пользователь\n
-    `service`: Сервис, который выбрал пользователь
+    `service`: Сервис, который выбрал пользователь\n
+    `order_id`: ID заказа номера телефона\n
+    `phone_number`: Заказанный номер телефона
     """
 
     user = await User.query.where(User.user_id == user_id).gino.first()
@@ -93,6 +99,10 @@ async def update(user_id: int, lang: str = None, api_key: str = None, country_id
         await user.update(operator=operator, updated_at=datetime.now()).apply()
     if service is not None:
         await user.update(service=service, updated_at=datetime.now()).apply()
+    if order_id is not None:
+        await user.update(order_id=order_id, updated_at=datetime.now()).apply()
+    if phone_number is not None:
+        await user.update(phone_number=phone_number, updated_at=datetime.now()).apply()
 
 
 async def delete(user_id: int) -> None:
@@ -101,5 +111,6 @@ async def delete(user_id: int) -> None:
 
     `user_id`: ID пользователя в Telegram
     """
+
     user = await User.query.where(User.user_id == user_id).gino.first()
     await user.delete()
