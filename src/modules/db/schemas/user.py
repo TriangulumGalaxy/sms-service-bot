@@ -37,7 +37,7 @@ async def select_all() -> list:
     return all_users
 
 
-async def add(user_id: int, lang: str, api_key: str = None, country_id: int = None, country: str = None, operator: str = None, service: str = None, order_id: str = None, phone_number: str = None):
+async def add(user_id: int, lang: str, api_key: str = None, country_id: int = None, country: str = None, operator: str = None, service: str = None, order_id: int = None, phone_number: str = None):
     """
     Функция для добавления пользователя в бд
 
@@ -71,7 +71,7 @@ async def select(user_id: int) -> User:
     return user
 
 
-async def update(user_id: int, lang: str = None, api_key: str = None, country_id: int = None, country: str = None, operator: str = None, service: str = None, order_id: str = None, phone_number: str = None) -> None:
+async def update(user_id: int, lang: str = None, api_key: str = None, country_id: int = None, country: str = None, operator: str = None, service: str = None, order_id: int = None, phone_number: str = None) -> None:
     """
     Функция для обновления записи о пользователе в бд
 
