@@ -88,7 +88,7 @@ async def set_service_callback(call: CallbackQuery, state: FSMContext, callback_
     balance_limit = (await user_db.select(user_id)).balance_limit
     if balance_limit > current_balance:
         await call.message.answer(f"Ваш баланс ниже {balance_limit} и составляет {current_balance}", reply_markup=ok_and_delete_keyboard)
-    await user_db.update(user_id, service=svs[0]['id'])
+    await user_db.update(user_id, service=svs[0]['id'], number_price=price)
     await call.message.edit_text(f'Вы хотите заказать номер со следующими настройками?\nOperator:{operator}\nService:{service}\nPrice:{price}\n', reply_markup=bool_keyboard)
 
 
