@@ -22,6 +22,7 @@ class User(db.BaseModel):
     service = Column(String(100))
     order_id = Column(BigInteger)
     phone_number = Column(String(100))
+    number_price = Column(BigInteger)
     balance_limit = Column(BigInteger, default=0, nullable=False)
     fav_country = Column(String(100))
     fav_operator = Column(String(100))
@@ -41,7 +42,7 @@ async def select_all() -> list:
     return all_users
 
 
-async def add(user_id: int, lang: str, api_key: str = None, country_id: int = None, country: str = None, operator: str = None, service: str = None, order_id: int = None, phone_number: str = None, balance_limit: int = None, fav_country: str = None, fav_operator: str = None, fav_service: str = None):
+async def add(user_id: int, lang: str, api_key: str = None, country_id: int = None, country: str = None, operator: str = None, service: str = None, order_id: int = None, phone_number: str = None, number_price: int = None, balance_limit: int = None, fav_country: str = None, fav_operator: str = None, fav_service: str = None):
     """
     Функция для добавления пользователя в бд
 
@@ -54,6 +55,7 @@ async def add(user_id: int, lang: str, api_key: str = None, country_id: int = No
     `service`: Сервис, который выбрал пользователь\n
     `order_id`: ID заказа номера телефона\n
     `phone_number`: Заказанный номер телефона\n
+    `number_price`: Цена заказанного номера\n
     `balance_limit`: Лимит баланса номера\n
     `fav_country`: Любимая страна номера\n
     `fav_operator`: Любимый оператор\n
@@ -62,7 +64,7 @@ async def add(user_id: int, lang: str, api_key: str = None, country_id: int = No
 
     try:
         user = User(user_id=user_id, lang=lang, api_key=api_key, country_id=country_id, country=country,
-                    operator=operator, service=service, order_id=order_id, phone_number=phone_number, balance_limit=balance_limit, fav_country=fav_country, fav_operator=fav_operator, fav_service=fav_service, created_at=datetime.now(), updated_at=datetime.now())
+                    operator=operator, service=service, order_id=order_id, phone_number=phone_number, number_price=number_price, balance_limit=balance_limit, fav_country=fav_country, fav_operator=fav_operator, fav_service=fav_service, created_at=datetime.now(), updated_at=datetime.now())
         await user.create()
     except UniqueViolationError:
         pass
@@ -79,7 +81,7 @@ async def select(user_id: int) -> User:
     return user
 
 
-async def update(user_id: int, lang: str = None, api_key: str = None, country_id: int = None, country: str = None, operator: str = None, service: str = None, order_id: int = None, phone_number: str = None, balance_limit: int = None, fav_country: str = None, fav_operator: str = None, fav_service: str = None) -> None:
+async def update(user_id: int, lang: str = None, api_key: str = None, country_id: int = None, country: str = None, operator: str = None, service: str = None, order_id: int = None, phone_number: str = None, number_price: int = None, balance_limit: int = None, fav_country: str = None, fav_operator: str = None, fav_service: str = None) -> None:
     """
     Функция для обновления записи о пользователе в бд
 
@@ -92,6 +94,7 @@ async def update(user_id: int, lang: str = None, api_key: str = None, country_id
     `service`: Сервис, который выбрал пользователь\n
     `order_id`: ID заказа номера телефона\n
     `phone_number`: Заказанный номер телефона\n
+    `number_price`: Цена заказанного номера\n
     `balance_limit`: Лимит баланса номера\n
     `fav_country`: Любимая страна номера\n
     `fav_operator`: Любимый оператор\n
@@ -115,6 +118,8 @@ async def update(user_id: int, lang: str = None, api_key: str = None, country_id
         await user.update(order_id=order_id, updated_at=datetime.now()).apply()
     if phone_number is not None:
         await user.update(phone_number=phone_number, updated_at=datetime.now()).apply()
+    if number_price is not None:
+        await user.update(number_price=number_price, updated_at=datetime.now()).apply()
     if balance_limit is not None:
         await user.update(balance_limit=balance_limit, updated_at=datetime.now()).apply()
     if fav_country is not None:
