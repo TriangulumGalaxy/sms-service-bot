@@ -11,8 +11,32 @@ bool_keyboard.insert(InlineKeyboardButton('Нет', callback_data='bool:no'))
 
 back_to_menu_button = InlineKeyboardButton(
     'Назад в меню', callback_data="back_to_menu")
+
+
 back_to_menu_keyboard = InlineKeyboardMarkup()
 back_to_menu_keyboard.insert(back_to_menu_button)
+
+change_balance_limit_keyboard = InlineKeyboardMarkup(row_width=2)
+change_balance_limit_keyboard.insert(InlineKeyboardButton(
+    'Изменить', callback_data="change_balance_limit"))
+change_balance_limit_keyboard.insert(back_to_menu_button)
+
+
+async def get_limits_keyboard(limits: list = [
+    100,
+    500,
+    1000,
+    5000,
+    10000,
+    20000,
+    0,
+]) -> InlineKeyboardMarkup:
+    keyboard = InlineKeyboardMarkup()
+    for i in limits:
+        keyboard.insert(InlineKeyboardButton(
+            f"{i} RUB", callback_data=f"set_limit:{i}"))
+    return keyboard
+
 menu = InlineKeyboardMarkup(row_width=2)
 menu.insert(InlineKeyboardButton(
     "Выбрать страну", callback_data="choose_country"))
@@ -33,7 +57,8 @@ menu.insert(InlineKeyboardButton(
 menu.insert(InlineKeyboardButton(
     'Проверить баланс', callback_data="check_balance"))
 menu.insert(
-    InlineKeyboardButton("Настроить уведомления о балансе", callback_data="balance_limit_notification")
+    InlineKeyboardButton("Настроить уведомления о балансе",
+                         callback_data="balance_limit_notification")
 )
 
 
