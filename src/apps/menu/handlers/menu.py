@@ -37,7 +37,6 @@ async def country_choose(call: CallbackQuery):
 
 @dp.callback_query_handler(text_contains="country_name", state=MenuStates.country)
 async def country_choose_and_save_callback(call: CallbackQuery, state: FSMContext):
-    # TEST !!!!
     country = call.data.split(':')[1]
     country_id = [d['id'] for d in (await get_country_and_operators()) if d['name'] == country][0]
     await user_db.update(call.message.chat.id, country=country, operator=None, service=None, country_id=country_id)
@@ -47,8 +46,7 @@ async def country_choose_and_save_callback(call: CallbackQuery, state: FSMContex
 
 @dp.callback_query_handler(lambda c: c.data and c.data == "choose_operator", state="*")
 async def operator_choose(call: CallbackQuery):
-    # Здесь название страны из БД
-    country = (await user_db.select(call.message.chat.id)).country  # TEST !!!!
+    country = (await user_db.select(call.message.chat.id)).country
     await call.message.edit_text('Operator', reply_markup=(await get_operators_keyboard(country_name=country, page=1)))
     await MenuStates.operator.set()
 
@@ -56,7 +54,7 @@ async def operator_choose(call: CallbackQuery):
 @dp.callback_query_handler(text_contains='operator_name', state=MenuStates.operator)
 async def operator_choose_and_save_callback(call: CallbackQuery, state: FSMContext):
     operator = call.data.split(':')[1]
-    await user_db.update(call.message.chat.id, operator=operator)  # TEST!!!!
+    await user_db.update(call.message.chat.id, operator=operator)
     await call.message.edit_text(f'Вы выбрали оператора: {operator}', reply_markup=back_to_menu_keyboard)
 
 
@@ -71,7 +69,7 @@ async def service_choose(call: CallbackQuery):
         await call.message.edit_text('Сначала выберите срану', reply_markup=back_to_menu_keyboard)
         return
     await call.message.edit_text('Service', reply_markup=(await get_services_and_costs_keyboard(country=user.country_id, operator=user.operator)))
-    # await json_stats.update_param('choosed_service')
+    await json_stats.update_param('choosed_service')
     await MenuStates.service.set()
 
 
@@ -85,7 +83,7 @@ async def set_service_callback(call: CallbackQuery, state: FSMContext, callback_
     service = callback_data['name']
     price = callback_data['price']
     svs = list(filter(lambda x: x['name'] == service, await get_services_and_cost(operator=operator, country=(await user_db.select(user_id)).country_id)))
-    print(svs)
+    # print(svs)
     current_balance = await get_balance()
     balance_limit = (await user_db.select(user_id)).balance_limit
     if balance_limit > current_balance:
@@ -147,7 +145,7 @@ async def end_activation_callback(call: CallbackQuery, state: FSMContext):
         await call.message.edit_text('Вы еще не купили номер!', reply_markup=back_to_menu_keyboard)
         return
     res = await set_status(id_=order_id, status=6)
-    print(res)
+    # print(res)
     await call.message.edit_text('Активация завершена', reply_markup=back_to_menu_keyboard)
 
 
@@ -163,7 +161,7 @@ async def retry_sms_sending_callback(call: CallbackQuery, state: FSMContext):
 
 @dp.callback_query_handler(text_contains='check_sms')
 async def check_sms_handler(call: CallbackQuery, state: FSMContext):
-    print(await get_balance())
+    # print(await get_balance())
     order_id = (await user_db.select(call.message.chat.id)).order_id
     if not order_id:
         await call.message.edit_text('Вы еще не купили номер!', reply_markup=back_to_menu_keyboard)
@@ -175,7 +173,7 @@ async def check_sms_handler(call: CallbackQuery, state: FSMContext):
         await call.message.edit_text(f'Код: {res.split(":")[1]}', reply_markup=back_to_menu_keyboard)
         await json_stats.update_param('got_sms')
     else:
-        print(res)
+        # print(res)
         await call.message.edit_text('Нет смс', reply_markup=back_to_menu_keyboard)
 
 
