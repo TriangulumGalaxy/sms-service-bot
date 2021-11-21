@@ -78,7 +78,8 @@ async def set_service_callback(call: CallbackQuery, state: FSMContext, callback_
         return
     service = callback_data['name']
     price = callback_data['price']
-    svs = await get_services_and_cost(operator=operator, country=(await user_db.select(call.message.chat.id)))
+    svs = list(filter(lambda x: x['name'] == service, await get_services_and_cost(operator=operator, country=(await user_db.select(call.message.chat.id)).country_id)))
+    print(svs)
     await user_db.update(call.message.chat.id, service=svs[0]['id'])
     await call.message.edit_text(f'Вы хотите заказать номер со следующими настройками?\nOperator:{operator}\nService:{service}\nPrice:{price}\n', reply_markup=bool_keyboard)
 
@@ -108,13 +109,10 @@ async def order_number_callback(call: CallbackQuery, state: FSMContext):
     if res in exceptions:
         await call.message.edit_text(f'Произошла ошибка: {res}', reply_markup=back_to_menu_keyboard)
         return
-    status = await get_status(id=res.split(':')[1])
+    status = await get_status(id_=res.split(':')[1])
     await user_db.update(user_id, order_id=int(res.split(":")[1]), phone_number=res.split(":")[2])
     await call.message.edit_text(f'Данные вашего заказа:\nНомер:{res.split(":")[2]}', reply_markup=back_to_menu_keyboard)
     await state.finish()
-    if res in exceptions:
-        await call.message.edit_text(f'Произошла ошибка: {res}', reply_markup=back_to_menu_keyboard)
-    
 
 
 @dp.callback_query_handler(text="cancel_order")
@@ -123,7 +121,7 @@ async def cancel_number_ordering_callback(call: CallbackQuery, state: FSMContext
     if not order_id:
         await call.message.edit_text('Вы еще не купили номер!', reply_markup=back_to_menu_keyboard)
         return
-    await set_status(id=order_id, status=8)
+    await set_status(id_=order_id, status=8)
     await call.message.edit_text('Отменено', reply_markup=back_to_menu_keyboard)
 
 
@@ -133,7 +131,7 @@ async def end_activation_callback(call: CallbackQuery, state: FSMContext):
     if not order_id:
         await call.message.edit_text('Вы еще не купили номер!', reply_markup=back_to_menu_keyboard)
         return
-    res = await set_status(id=order_id, status=6)
+    res = await set_status(id_=order_id, status=6)
     print(res)
     await call.message.edit_text('Активация завершена', reply_markup=back_to_menu_keyboard)
 
@@ -144,7 +142,7 @@ async def retry_sms_sending_callback(call: CallbackQuery, state: FSMContext):
     if not order_id:
         await call.message.edit_text('Вы еще не купили номер!', reply_markup=back_to_menu_keyboard)
         return
-    await set_status(id=order_id, status=3)
+    await set_status(id_=order_id, status=3)
     await call.message.edit_text('СМС повторно отправлено', reply_markup=back_to_menu_keyboard)
 
 
@@ -155,12 +153,13 @@ async def check_sms_handler(call: CallbackQuery, state: FSMContext):
     if not order_id:
         await call.message.edit_text('Вы еще не купили номер!', reply_markup=back_to_menu_keyboard)
         return
-    res = await get_status(id=order_id)
+    res = await get_status(id_=order_id)
     if 'STATUS_WAIT_CODE' in res:
         await call.message.edit_text("Ожидаем смс, попробуйте позже!", reply_markup=back_to_menu_keyboard)
     elif "STATUS_OK" in res:
         await call.message.edit_text(f'Код: {res.split(":")[1]}', reply_markup=back_to_menu_keyboard)
     else:
+        print(res)
         await call.message.edit_text('Нет смс', reply_markup=back_to_menu_keyboard)
 
 
