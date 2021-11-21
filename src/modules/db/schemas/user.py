@@ -22,7 +22,7 @@ class User(db.BaseModel):
     service = Column(String(100))
     order_id = Column(BigInteger)
     phone_number = Column(String(100))
-    balance_limit = Column(BigInteger)
+    balance_limit = Column(BigInteger, default=0, nullable=False)
     fav_country = Column(String(100))
     fav_operator = Column(String(100))
     fav_service = Column(String(100))
