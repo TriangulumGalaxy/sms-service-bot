@@ -3,14 +3,17 @@ from aiogram.types import CallbackQuery, Message
 from apps.root import dp
 from apps.start.keyboards import (get_countries_and_operators_keyboard,
                                   get_operators_keyboard)
-from modules.api.services import get_balance, get_country_and_operators, get_number, exceptions, get_services_and_cost, get_status, set_status
-
-from ..keyboards.inline import (
-    get_services_and_costs_keyboard, bool_keyboard)
-from ..keyboards.inline import menu as menu_keyboard
-from ..keyboards.inline import back_to_menu_keyboard
-from ..keyboards.inline import page_callback, service_callback
+from modules.api.services import (exceptions, get_balance,
+                                  get_country_and_operators, get_number,
+                                  get_services_and_cost, get_status,
+                                  set_status)
 from modules.db.schemas import user as user_db
+from modules.statistics import json_stats
+
+from ..keyboards.inline import (back_to_menu_keyboard, bool_keyboard,
+                                get_services_and_costs_keyboard)
+from ..keyboards.inline import menu as menu_keyboard
+from ..keyboards.inline import page_callback, service_callback
 from ..states.menu import MenuStates
 
 
@@ -28,6 +31,7 @@ async def menu_cmd(message: Message, state: FSMContext):
 @dp.callback_query_handler(lambda c: c.data and c.data == "choose_country")
 async def country_choose(call: CallbackQuery):
     await call.message.edit_text('Выберите страну', reply_markup=(await get_countries_and_operators_keyboard(page=1)))
+    await json_stats.update_param('choosed_country')
     await MenuStates.country.set()
 
 
@@ -67,6 +71,7 @@ async def service_choose(call: CallbackQuery):
         await call.message.edit_text('Сначала выберите срану', reply_markup=back_to_menu_keyboard)
         return
     await call.message.edit_text('Service', reply_markup=(await get_services_and_costs_keyboard(country=user.country_id, operator=user.operator)))
+    await json_stats.update_param('choosed_service')
     await MenuStates.service.set()
 
 
@@ -112,9 +117,7 @@ async def order_number_callback(call: CallbackQuery, state: FSMContext):
     await user_db.update(user_id, order_id=int(res.split(":")[1]), phone_number=res.split(":")[2])
     await call.message.edit_text(f'Данные вашего заказа:\nНомер:{res.split(":")[2]}', reply_markup=back_to_menu_keyboard)
     await state.finish()
-    if res in exceptions:
-        await call.message.edit_text(f'Произошла ошибка: {res}', reply_markup=back_to_menu_keyboard)
-    
+    await json_stats.update_param('got_number')
 
 
 @dp.callback_query_handler(text="cancel_order")
@@ -125,6 +128,7 @@ async def cancel_number_ordering_callback(call: CallbackQuery, state: FSMContext
         return
     await set_status(id=order_id, status=8)
     await call.message.edit_text('Отменено', reply_markup=back_to_menu_keyboard)
+    await json_stats.update_param('cancelled_number')
 
 
 @dp.callback_query_handler(text="end_activation")
@@ -160,6 +164,7 @@ async def check_sms_handler(call: CallbackQuery, state: FSMContext):
         await call.message.edit_text("Ожидаем смс, попробуйте позже!", reply_markup=back_to_menu_keyboard)
     elif "STATUS_OK" in res:
         await call.message.edit_text(f'Код: {res.split(":")[1]}', reply_markup=back_to_menu_keyboard)
+        await json_stats.update_param('got_sms')
     else:
         await call.message.edit_text('Нет смс', reply_markup=back_to_menu_keyboard)
 
