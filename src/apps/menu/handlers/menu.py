@@ -13,7 +13,7 @@ from modules.statistics import json_stats
 from ..keyboards.inline import (back_to_menu_keyboard, bool_keyboard,
                                 get_services_and_costs_keyboard)
 from ..keyboards.inline import menu as menu_keyboard
-from ..keyboards.inline import page_callback, service_callback
+from ..keyboards.inline import page_callback, service_callback, change_balance_limit_keyboard, get_limits_keyboard
 from ..states.menu import MenuStates
 
 
@@ -171,9 +171,20 @@ async def check_sms_handler(call: CallbackQuery, state: FSMContext):
         await call.message.edit_text('Нет смс', reply_markup=back_to_menu_keyboard)
 
 
-# @dp.callback_query_handler(text_contains="balance_limit_notification")
-# async def balance_limit_notification_callback(call: CallbackQuery, state: FSMContext):
-#     await user_db.update(call.message.chat.id, )
+@dp.callback_query_handler(text_contains="balance_limit_notification")
+async def balance_limit_notification_callback(call: CallbackQuery, state: FSMContext):
+    await call.message.edit_text(f"У вас стоит лимит: {(await user_db.select(call.message.chat.id)).balance_limit}", reply_markup=change_balance_limit_keyboard)
+
+
+@dp.callback_query_handler(text_contains="change_balance_limit")
+async def change_balance_limit_callback(call: CallbackQuery, state: FSMContext):
+    await call.message.edit_text("Выберите сумму, при балансе ниже которой Вам придет уведомление", reply_markup=(await get_limits_keyboard()))
+
+
+@dp.callback_query_handler(text_contains="set_limit")
+async def set_limit_callback(call: CallbackQuery, state: FSMContext):
+    await user_db.update(call.message.chat.id, balance_limit=int(call.data.split(":")[1]))
+    await call.message.edit_text(f"Теперь Вам будут приходить уведомления, когда баланс упадет ниже {call.data.split(':')[1]}", reply_markup=back_to_menu_keyboard)
 
 
 @dp.callback_query_handler(text_contains="check_balance")
