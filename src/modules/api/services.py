@@ -1,6 +1,5 @@
 import json
-from logging import exception
-from typing import Dict, List, Optional, Union
+from typing import Dict, List
 from aiohttp import ClientSession
 from modules.config.env_config import API_KEY, LANG
 from dataclasses import dataclass
@@ -56,26 +55,23 @@ async def get_services_and_cost(operator: str, country: int, api_key: str = API_
     return json_response
 
 
-async def get_number(service: str, operator: str, country: int, api_key: str = API_KEY, lang: str = LANG) -> Union[object, str]:
+async def get_number(service: str, operator: str, country: int, api_key: str = API_KEY, lang: str = LANG) -> str:
     """
     action: `getNumber`
     """
     async with ClientSession() as session:
         async with session.get(f"{API_URL.format(API_KEY=api_key, LANG=lang, ACTION='getNumber')}&service={service}&operator={operator}&country={country}") as res:
             text = await res.text()
-            if text in exceptions:
-                return text
-            json_response = json.loads(await res.text())
-    return json_response
+    return text
 
 
-async def set_status(id, status, api_key: str = API_KEY, lang: str = LANG) -> str:
+async def set_status(id: int, status: int, api_key: str = API_KEY, lang: str = LANG) -> str:
     """
     action: `setStatus`
     """
     async with ClientSession() as session:
         async with session.post(f"{API_URL.format(API_KEY=api_key, LANG=lang, ACTION='setStatus')}&id={id}&status={status}") as res:
-            response = res.text()
+            response = await res.text()
     return response
 
 
@@ -85,5 +81,5 @@ async def get_status(id, api_key: str = API_KEY, lang: str = LANG) -> str:
     """
     async with ClientSession() as session:
         async with session.get(f"{API_URL.format(API_KEY=api_key, LANG=lang, ACTION='getStatus')}&id={id}") as res:
-            response = res.text()
+            response = await res.text()
     return response
