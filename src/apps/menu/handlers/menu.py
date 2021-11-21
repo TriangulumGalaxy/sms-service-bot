@@ -13,7 +13,7 @@ from modules.statistics import json_stats
 from ..keyboards.inline import (back_to_menu_keyboard, bool_keyboard,
                                 get_services_and_costs_keyboard)
 from ..keyboards.inline import menu as menu_keyboard
-from ..keyboards.inline import page_callback, service_callback, change_balance_limit_keyboard, get_limits_keyboard
+from ..keyboards.inline import page_callback, service_callback, change_balance_limit_keyboard, get_limits_keyboard, ok_and_delete_keyboard
 from ..states.menu import MenuStates
 
 
@@ -71,21 +71,26 @@ async def service_choose(call: CallbackQuery):
         await call.message.edit_text('Сначала выберите срану', reply_markup=back_to_menu_keyboard)
         return
     await call.message.edit_text('Service', reply_markup=(await get_services_and_costs_keyboard(country=user.country_id, operator=user.operator)))
-    await json_stats.update_param('choosed_service')
+    # await json_stats.update_param('choosed_service')
     await MenuStates.service.set()
 
 
 @dp.callback_query_handler(service_callback.filter(), state=MenuStates.service)
 async def set_service_callback(call: CallbackQuery, state: FSMContext, callback_data: dict):
-    operator = (await user_db.select(call.message.chat.id)).operator
+    user_id = call.message.chat.id
+    operator = (await user_db.select(user_id)).operator
     if not operator:
         await call.message.edit_text('Пожалуйста, выберите оператора!')
         return
     service = callback_data['name']
     price = callback_data['price']
-    svs = list(filter(lambda x: x['name'] == service, await get_services_and_cost(operator=operator, country=(await user_db.select(call.message.chat.id)).country_id)))
+    svs = list(filter(lambda x: x['name'] == service, await get_services_and_cost(operator=operator, country=(await user_db.select(user_id)).country_id)))
     print(svs)
-    await user_db.update(call.message.chat.id, service=svs[0]['id'])
+    current_balance = await get_balance()
+    balance_limit = (await user_db.select(user_id)).balance_limit
+    if balance_limit > current_balance:
+        await call.message.answer(f"Ваш баланс ниже {balance_limit} и составляет {current_balance}", reply_markup=ok_and_delete_keyboard)
+    await user_db.update(user_id, service=svs[0]['id'])
     await call.message.edit_text(f'Вы хотите заказать номер со следующими настройками?\nOperator:{operator}\nService:{service}\nPrice:{price}\n', reply_markup=bool_keyboard)
 
 
@@ -114,7 +119,10 @@ async def order_number_callback(call: CallbackQuery, state: FSMContext):
     if res in exceptions:
         await call.message.edit_text(f'Произошла ошибка: {res}', reply_markup=back_to_menu_keyboard)
         return
-    status = await get_status(id_=res.split(':')[1])
+    current_balance = await get_balance()
+    balance_limit = (await user_db.select(user_id)).balance_limit
+    if balance_limit > current_balance:
+        await call.message.answer(f"Ваш баланс ниже {balance_limit} и составляет {current_balance}", reply_markup=ok_and_delete_keyboard)
     await user_db.update(user_id, order_id=int(res.split(":")[1]), phone_number=res.split(":")[2])
     await call.message.edit_text(f'Данные вашего заказа:\nНомер:{res.split(":")[2]}', reply_markup=back_to_menu_keyboard)
     await state.finish()
@@ -190,3 +198,8 @@ async def set_limit_callback(call: CallbackQuery, state: FSMContext):
 @dp.callback_query_handler(text_contains="check_balance")
 async def check_balance_callback(call: CallbackQuery, state: FSMContext):
     await call.message.edit_text(f"Ваш баланс: {await get_balance()}", reply_markup=back_to_menu_keyboard)
+
+
+@dp.callback_query_handler(text_contains="ok_and_delete", state="*")
+async def ok_and_delete_callback(call: CallbackQuery, state: FSMContext):
+    await call.message.delete()
