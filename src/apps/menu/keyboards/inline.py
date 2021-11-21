@@ -11,29 +11,54 @@ bool_keyboard.insert(InlineKeyboardButton('Нет', callback_data='bool:no'))
 
 back_to_menu_button = InlineKeyboardButton(
     'Назад в меню', callback_data="back_to_menu")
+
+
 back_to_menu_keyboard = InlineKeyboardMarkup()
 back_to_menu_keyboard.insert(back_to_menu_button)
+
+change_balance_limit_keyboard = InlineKeyboardMarkup(row_width=2)
+change_balance_limit_keyboard.insert(InlineKeyboardButton(
+    'Изменить', callback_data="change_balance_limit"))
+change_balance_limit_keyboard.insert(back_to_menu_button)
+
+
+async def get_limits_keyboard(limits: list = [
+    100,
+    500,
+    1000,
+    5000,
+    10000,
+    20000,
+    0,
+]) -> InlineKeyboardMarkup:
+    keyboard = InlineKeyboardMarkup()
+    for i in limits:
+        keyboard.insert(InlineKeyboardButton(
+            f"{i} RUB", callback_data=f"set_limit:{i}"))
+    return keyboard
+ok_and_delete_keyboard = InlineKeyboardMarkup(row_width=1).insert(InlineKeyboardButton('Ок', callback_data="ok_and_delete"))
 menu = InlineKeyboardMarkup(row_width=2)
 menu.insert(InlineKeyboardButton(
     "Выбрать страну", callback_data="choose_country"))
+menu.insert(InlineKeyboardButton(
+    "Завершить активацию", callback_data="end_activation"))
 menu.insert(InlineKeyboardButton(
     "Выбрать оператора", callback_data="choose_operator"))
 menu.insert(
     InlineKeyboardButton("Заказать номер", callback_data="order_number")
 )
+menu.insert(InlineKeyboardButton(
+    'Проверить баланс', callback_data="check_balance"))
 menu.insert(InlineKeyboardButton("Запросить еще одну смс",
                                  callback_data="retry_sms_sending"))
 menu.insert(InlineKeyboardButton('Просмотреть СМС', callback_data="check_sms"))
 menu.insert(InlineKeyboardButton(
-    "Завершить активацию", callback_data="end_activation"))
-menu.insert(InlineKeyboardButton(
-    "Отменить заказ", callback_data="cancel_order"))
-menu.insert(InlineKeyboardButton(
     "Выбрать сервис", callback_data="choose_service"))
 menu.insert(InlineKeyboardButton(
-    'Проверить баланс', callback_data="check_balance"))
-menu.insert(
-    InlineKeyboardButton("Настроить уведомления о балансе", callback_data="balance_limit_notification")
+    "Отменить заказ", callback_data="cancel_order"))
+menu.add(
+    InlineKeyboardButton("Настроить уведомления о балансе",
+                         callback_data="balance_limit_notification")
 )
 
 

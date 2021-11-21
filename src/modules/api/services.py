@@ -65,21 +65,22 @@ async def get_number(service: str, operator: str, country: int, api_key: str = A
     return text
 
 
-async def set_status(id: int, status: int, api_key: str = API_KEY, lang: str = LANG) -> str:
+async def set_status(id_: int, status: int, api_key: str = API_KEY, lang: str = LANG) -> str:
     """
     action: `setStatus`
     """
     async with ClientSession() as session:
-        async with session.post(f"{API_URL.format(API_KEY=api_key, LANG=lang, ACTION='setStatus')}&id={id}&status={status}") as res:
+        async with session.post(f"{API_URL.format(API_KEY=api_key, LANG=lang, ACTION='setStatus')}&id={id_}&status={status}") as res:
             response = await res.text()
     return response
 
 
-async def get_status(id, api_key: str = API_KEY, lang: str = LANG) -> str:
+async def get_status(id_, api_key: str = API_KEY, lang: str = LANG) -> str:
     """
     action: `getStatus`
     """
     async with ClientSession() as session:
-        async with session.get(f"{API_URL.format(API_KEY=api_key, LANG=lang, ACTION='getStatus')}&id={id}") as res:
+        print(f"{API_URL.format(API_KEY=api_key, LANG=lang, ACTION='getStatus')}&id={id_}")
+        async with session.get(f"{API_URL.format(API_KEY=api_key, LANG=lang, ACTION='getStatus')}&id={id_}") as res:
             response = await res.text()
     return response
