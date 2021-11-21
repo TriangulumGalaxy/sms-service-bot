@@ -81,8 +81,8 @@ async def page_callback_handler(call: CallbackQuery, state: FSMContext, callback
         await call.message.edit_reply_markup((await get_services_and_costs_keyboard(page=int(callback_data['page']) + 1)))
 
 
-@dp.callback_query_handler(text='order_number', state='*')
-async def order_number_callbak(call: CallbackQuery, state: FSMContext):
+@dp.callback_query_handler(text_contains='order_number', state='*')
+async def order_number_callback(call: CallbackQuery, state: FSMContext):
     user_id = call.message.chat.id
     user = await user_db.select(user_id)
     country = user.country_id
