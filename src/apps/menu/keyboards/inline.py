@@ -36,7 +36,7 @@ async def get_limits_keyboard(limits: list = [
         keyboard.insert(InlineKeyboardButton(
             f"{i} RUB", callback_data=f"set_limit:{i}"))
     return keyboard
-
+ok_and_delete_keyboard = InlineKeyboardMarkup(row_width=1).insert(InlineKeyboardButton('Ок', callback_data="ok_and_delete"))
 menu = InlineKeyboardMarkup(row_width=2)
 menu.insert(InlineKeyboardButton(
     "Выбрать страну", callback_data="choose_country"))
