@@ -105,6 +105,9 @@ async def order_number_callback(call: CallbackQuery, state: FSMContext):
         await state.finish()
         return
     res = await get_number(service, operator, country)
+    if res in exceptions:
+        await call.message.edit_text(f'Произошла ошибка: {res}', reply_markup=back_to_menu_keyboard)
+        return
     status = await get_status(id=res.split(':')[1])
     await user_db.update(user_id, order_id=int(res.split(":")[1]), phone_number=res.split(":")[2])
     await call.message.edit_text(f'Данные вашего заказа:\nНомер:{res.split(":")[2]}', reply_markup=back_to_menu_keyboard)
