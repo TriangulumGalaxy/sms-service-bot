@@ -1,0 +1,14 @@
+{
+    "started": 0,
+    "choosed_country_reg": 0,
+    "choosed_service_reg": 0,
+    "reg_redirected": 0,
+    "reg_succ": 0,
+    "deposited": 0,
+    "choosed_country": 0,
+    "choosed_service": 0,
+    "got_number": 0,
+    "got_sms": 0,
+    "cancelled_number": 0,
+    "not_got_sms": 0
+}
