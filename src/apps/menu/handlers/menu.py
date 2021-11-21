@@ -88,7 +88,7 @@ async def order_number_callbak(call: CallbackQuery, state: FSMContext):
     country = user.country_id
     operator = user.operator
     service = user.service
-    if not all((country, operator, service)):
+    if country is None or not operator or not service:
         await call.message.edit_text('Вы выбрали не все параметры!', reply_markup=back_to_menu_keyboard)
         await state.finish()
         return
