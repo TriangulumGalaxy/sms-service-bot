@@ -1,10 +1,12 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+# from aiogram.utils import callback_data
 from modules.api.services import get_country_and_operators, get_services_and_cost
 from aiogram.utils.callback_data import CallbackData
 
 
 bool_keyboard = InlineKeyboardMarkup(row_width=2)
-bool_keyboard.insert(InlineKeyboardButton('Да', callback_data='bool:yes:order_number'))
+bool_keyboard.insert(InlineKeyboardButton(
+    'Да', callback_data='bool:yes:order_number'))
 bool_keyboard.insert(InlineKeyboardButton('Нет', callback_data='bool:no'))
 
 back_to_menu_button = InlineKeyboardButton(
@@ -21,12 +23,18 @@ menu.insert(
 )
 menu.insert(InlineKeyboardButton("Запросить еще одну смс",
                                  callback_data="retry_sms_sending"))
+menu.insert(InlineKeyboardButton('Просмотреть СМС', callback_data="check_sms"))
 menu.insert(InlineKeyboardButton(
     "Завершить активацию", callback_data="end_activation"))
 menu.insert(InlineKeyboardButton(
     "Отменить заказ", callback_data="cancel_order"))
 menu.insert(InlineKeyboardButton(
     "Выбрать сервис", callback_data="choose_service"))
+menu.insert(InlineKeyboardButton(
+    'Проверить баланс', callback_data="check_balance"))
+menu.insert(
+    InlineKeyboardButton("Настроить уведомления о балансе", callback_data="balance_limit_notification")
+)
 
 
 async def get_countries_keyboard() -> InlineKeyboardMarkup:
