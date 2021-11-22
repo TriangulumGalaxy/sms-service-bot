@@ -1,4 +1,4 @@
-from sqlalchemy import sql, Column, BigInteger, String, DateTime, Integer, Float
+from sqlalchemy import sql, Column, BigInteger, String, DateTime, Integer, Float, Boolean
 from asyncpg import UniqueViolationError
 from datetime import datetime
 
@@ -15,6 +15,7 @@ class User(db.BaseModel):
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     user_id = Column(BigInteger, unique=True)
     lang = Column(String(100))
+    is_admin = Column(Boolean)
     api_key = Column(String(100))
     country_id = Column(Integer)
     country = Column(String(100))
@@ -22,7 +23,7 @@ class User(db.BaseModel):
     service = Column(String(100))
     order_id = Column(BigInteger)
     phone_number = Column(String(100))
-    number_price = Column(BigInteger)
+    number_price = Column(Float)
     balance_limit = Column(BigInteger, default=0, nullable=False)
     fav_country = Column(String(100))
     fav_operator = Column(String(100))
@@ -42,12 +43,13 @@ async def select_all() -> list:
     return all_users
 
 
-async def add(user_id: int, lang: str, api_key: str = None, country_id: int = None, country: str = None, operator: str = None, service: str = None, order_id: int = None, phone_number: str = None, number_price: float = None, balance_limit: int = 0, fav_country: str = None, fav_operator: str = None, fav_service: str = None):
+async def add(user_id: int, lang: str, is_admin: bool = False, api_key: str = None, country_id: int = None, country: str = None, operator: str = None, service: str = None, order_id: int = None, phone_number: str = None, number_price: float = None, balance_limit: int = 0, fav_country: str = None, fav_operator: str = None, fav_service: str = None):
     """
     Функция для добавления пользователя в бд
 
     `user_id`: ID пользователя в Telegram\n
     `lang`: Язык, который выбрал пользователь\n
+    `is_admin`: Определяет, является ли пользователь админом\n
     `api_key`: API ключ пользователя, который он вводил при регистрации\n
     `country_id`: ID страны, которую выбрал пользователь\n
     `country`: Страна, которую выбрал пользователь\n
@@ -63,7 +65,7 @@ async def add(user_id: int, lang: str, api_key: str = None, country_id: int = No
     """
 
     try:
-        user = User(user_id=user_id, lang=lang, api_key=api_key, country_id=country_id, country=country,
+        user = User(user_id=user_id, lang=lang, is_admin=is_admin, api_key=api_key, country_id=country_id, country=country,
                     operator=operator, service=service, order_id=order_id, phone_number=phone_number, number_price=number_price, balance_limit=balance_limit, fav_country=fav_country, fav_operator=fav_operator, fav_service=fav_service, created_at=datetime.now(), updated_at=datetime.now())
         await user.create()
     except UniqueViolationError:
@@ -81,12 +83,13 @@ async def select(user_id: int) -> User:
     return user
 
 
-async def update(user_id: int, lang: str = None, api_key: str = None, country_id: int = None, country: str = None, operator: str = None, service: str = None, order_id: int = None, phone_number: str = None, number_price: float = None, balance_limit: int = None, fav_country: str = None, fav_operator: str = None, fav_service: str = None) -> None:
+async def update(user_id: int, lang: str = None, is_admin: bool = None, api_key: str = None, country_id: int = None, country: str = None, operator: str = None, service: str = None, order_id: int = None, phone_number: str = None, number_price: float = None, balance_limit: int = None, fav_country: str = None, fav_operator: str = None, fav_service: str = None) -> None:
     """
     Функция для обновления записи о пользователе в бд
 
     `user_id`: ID пользователя в Telegram\n
     `lang`: Язык, который выбрал пользователь\n
+    `is_admin`: Определяет, является ли пользователь админом\n
     `api_key`: API ключ пользователя, который он вводил при регистрации\n
     `country_id`: ID страны, которую выбрал пользователь\n
     `country`: Страна, которую выбрал пользователь\n
@@ -104,6 +107,8 @@ async def update(user_id: int, lang: str = None, api_key: str = None, country_id
     user = await User.query.where(User.user_id == user_id).gino.first()
     if lang is not None:
         await user.update(lang=lang, updated_at=datetime.now()).apply()
+    if is_admin is not None:
+        await user.update(is_admin=is_admin, updated_at=datetime.now()).apply()
     if api_key is not None:
         await user.update(api_key=api_key, updated_at=datetime.now()).apply()
     if country_id is not None:
