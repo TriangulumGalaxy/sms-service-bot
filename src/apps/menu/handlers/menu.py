@@ -7,7 +7,7 @@ from modules.api.services import (exceptions, get_balance,
                                   get_country_and_operators, get_number,
                                   get_services_and_cost, get_status,
                                   set_status)
-from modules.db.schemas import user as user_db
+from modules.db.schemas import user as user_db, sold_numbers as sold_numbers_db
 from modules.statistics import json_stats
 
 from ..keyboards.inline import (back_to_menu_keyboard, bool_keyboard,
@@ -88,7 +88,7 @@ async def set_service_callback(call: CallbackQuery, state: FSMContext, callback_
     balance_limit = (await user_db.select(user_id)).balance_limit
     if balance_limit > current_balance:
         await call.message.answer(f"Ваш баланс ниже {balance_limit} и составляет {current_balance}", reply_markup=ok_and_delete_keyboard)
-    await user_db.update(user_id, service=svs[0]['id'], number_price=price)
+    await user_db.update(user_id, service=svs[0]['id'], number_price=float(price))
     await call.message.edit_text(f'Вы хотите заказать номер со следующими настройками?\nOperator:{operator}\nService:{service}\nPrice:{price}\n', reply_markup=bool_keyboard)
 
 
@@ -124,7 +124,12 @@ async def order_number_callback(call: CallbackQuery, state: FSMContext):
     await user_db.update(user_id, order_id=int(res.split(":")[1]), phone_number=res.split(":")[2])
     await call.message.edit_text(f'Данные вашего заказа:\nНомер:{res.split(":")[2]}', reply_markup=back_to_menu_keyboard)
     await state.finish()
+    
     await json_stats.update_param('got_number')
+    
+    # Добавление проданного номера в бд
+    sold_number_user = await user_db.select(user_id)
+    await sold_numbers_db.add(sold_number_user.phone_number, sold_number_user.number_price, sold_number_user.country)
 
 
 @dp.callback_query_handler(text="cancel_order")
