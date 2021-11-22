@@ -1,8 +1,7 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-# from aiogram.utils import callback_data
-from modules.api.services import get_country_and_operators, get_services_and_cost
 from aiogram.utils.callback_data import CallbackData
-
+from modules.api.services import (get_country_and_operators,
+                                  get_services_and_cost)
 
 bool_keyboard = InlineKeyboardMarkup(row_width=2)
 bool_keyboard.insert(InlineKeyboardButton(
@@ -15,6 +14,10 @@ back_to_menu_button = InlineKeyboardButton(
 
 back_to_menu_keyboard = InlineKeyboardMarkup()
 back_to_menu_keyboard.insert(back_to_menu_button)
+after_order_menu = InlineKeyboardMarkup()
+after_order_menu.insert(back_to_menu_button)
+after_order_menu.add(InlineKeyboardButton(
+    'Сохранить настройки в избранное', callback_data="save_to_favourite"))
 
 change_balance_limit_keyboard = InlineKeyboardMarkup(row_width=2)
 change_balance_limit_keyboard.insert(InlineKeyboardButton(
@@ -36,7 +39,8 @@ async def get_limits_keyboard(limits: list = [
         keyboard.insert(InlineKeyboardButton(
             f"{i} RUB", callback_data=f"set_limit:{i}"))
     return keyboard
-ok_and_delete_keyboard = InlineKeyboardMarkup(row_width=1).insert(InlineKeyboardButton('Ок', callback_data="ok_and_delete"))
+ok_and_delete_keyboard = InlineKeyboardMarkup(row_width=1).insert(
+    InlineKeyboardButton('Ок', callback_data="ok_and_delete"))
 menu = InlineKeyboardMarkup(row_width=2)
 menu.insert(InlineKeyboardButton(
     "Выбрать страну", callback_data="choose_country"))
@@ -56,6 +60,8 @@ menu.insert(InlineKeyboardButton(
     "Выбрать сервис", callback_data="choose_service"))
 menu.insert(InlineKeyboardButton(
     "Отменить заказ", callback_data="cancel_order"))
+menu.add(InlineKeyboardButton('Заказать из избранного',
+                              callback_data="order_from_favourite_number"))
 menu.add(
     InlineKeyboardButton("Настроить уведомления о балансе",
                          callback_data="balance_limit_notification")

@@ -10,10 +10,13 @@ from modules.api.services import (exceptions, get_balance,
 from modules.db.schemas import user as user_db
 from modules.statistics import json_stats
 
-from ..keyboards.inline import (back_to_menu_keyboard, bool_keyboard,
+from ..keyboards.inline import (after_order_menu, back_to_menu_keyboard,
+                                bool_keyboard, change_balance_limit_keyboard,
+                                get_limits_keyboard,
                                 get_services_and_costs_keyboard)
 from ..keyboards.inline import menu as menu_keyboard
-from ..keyboards.inline import page_callback, service_callback, change_balance_limit_keyboard, get_limits_keyboard, ok_and_delete_keyboard
+from ..keyboards.inline import (ok_and_delete_keyboard, page_callback,
+                                service_callback)
 from ..states.menu import MenuStates
 
 
@@ -88,7 +91,7 @@ async def set_service_callback(call: CallbackQuery, state: FSMContext, callback_
     balance_limit = (await user_db.select(user_id)).balance_limit
     if balance_limit > current_balance:
         await call.message.answer(f"Ваш баланс ниже {balance_limit} и составляет {current_balance}", reply_markup=ok_and_delete_keyboard)
-    await user_db.update(user_id, service=svs[0]['id'], number_price=price)
+    await user_db.update(user_id, service=svs[0]['id'], number_price=float(price))
     await call.message.edit_text(f'Вы хотите заказать номер со следующими настройками?\nOperator:{operator}\nService:{service}\nPrice:{price}\n', reply_markup=bool_keyboard)
 
 
@@ -122,7 +125,42 @@ async def order_number_callback(call: CallbackQuery, state: FSMContext):
     if balance_limit > current_balance:
         await call.message.answer(f"Ваш баланс ниже {balance_limit} и составляет {current_balance}", reply_markup=ok_and_delete_keyboard)
     await user_db.update(user_id, order_id=int(res.split(":")[1]), phone_number=res.split(":")[2])
-    await call.message.edit_text(f'Данные вашего заказа:\nНомер:{res.split(":")[2]}', reply_markup=back_to_menu_keyboard)
+    await call.message.edit_text(f'Данные вашего заказа:\nНомер:{res.split(":")[2]}', reply_markup=after_order_menu)
+    await state.finish()
+    await json_stats.update_param('got_number')
+
+
+@dp.callback_query_handler(text_contains='save_to_favourite')
+async def save_to_favourite_callback(call: CallbackQuery, state: FSMContext):
+    user_id = call.message.chat.id
+    user = await user_db.select(user_id)
+    fav_operator = user.operator
+    fav_country = user.country_id
+    fav_service = user.service
+    await user_db.update(user_id, fav_service=fav_service, fav_country=str(fav_country), fav_operator=fav_operator)
+    await call.message.edit_text(f"Вы сохранили следующие настройки:\nСтрана: {user.country}\nОператор: {fav_operator}\nСервис: {fav_service}", reply_markup=back_to_menu_keyboard)
+
+
+@dp.callback_query_handler(text="order_from_favourite_number")
+async def order_from_favourite_number_callback(call: CallbackQuery, state: FSMContext):
+    user_id = call.message.chat.id
+    user = await user_db.select(user_id)
+    country = user.fav_country
+    operator = user.fav_operator
+    service = user.fav_service
+    if country is None or not operator or not service:
+        await call.message.edit_text('Избранное не найдено!', reply_markup=back_to_menu_keyboard)
+        return
+    res = await get_number(service, operator, country)
+    if res in exceptions:
+        await call.message.edit_text(f'Произошла ошибка: {res}', reply_markup=back_to_menu_keyboard)
+        return
+    current_balance = await get_balance()
+    balance_limit = (await user_db.select(user_id)).balance_limit
+    if balance_limit > current_balance:
+        await call.message.answer(f"Ваш баланс ниже {balance_limit} и составляет {current_balance}", reply_markup=ok_and_delete_keyboard)
+    await user_db.update(user_id, order_id=int(res.split(":")[1]), phone_number=res.split(":")[2])
+    await call.message.edit_text(f'Данные вашего заказа:\nНомер:{res.split(":")[2]}', reply_markup=after_order_menu)
     await state.finish()
     await json_stats.update_param('got_number')
 
@@ -146,7 +184,9 @@ async def end_activation_callback(call: CallbackQuery, state: FSMContext):
         return
     res = await set_status(id_=order_id, status=6)
     # print(res)
-    await call.message.edit_text('Активация завершена', reply_markup=back_to_menu_keyboard)
+    if res not in exceptions:
+        await user_db.update(call.message.chat.id, country=None, country_id=None, operator=None, number_price=None, phone_number=None, order_id=None, service=None)
+        await call.message.edit_text('Активация завершена', reply_markup=back_to_menu_keyboard)
 
 
 @dp.callback_query_handler(text='retry_sms_sending')
