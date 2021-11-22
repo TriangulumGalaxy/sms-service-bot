@@ -21,7 +21,7 @@ class _ServicesAndCostsResponse:
 
 
 exceptions = ('NO_BALANCE', 'ACCESS_CANCEL',
-              'ACCESS_RETRY_GET', 'ACCESS_ACTIVATION')
+              'ACCESS_RETRY_GET', 'NO_NUMBERS')
 API_URL = "https://sms-service-online.com/stubs/handler_api?api_key={API_KEY}&lang={LANG}&action={ACTION}"
 
 
