@@ -1,6 +1,6 @@
 from aiogram import executor
 from apps import dp, db
-# from apps import _filters
+from apps import _filters
 
 
 async def flush_all():
@@ -37,5 +37,5 @@ def bind_filters(dp, *args):
 
 
 if __name__ == '__main__':
-    # bind_filters(dp, _filters)
+    bind_filters(dp, _filters)
     executor.start_polling(dp, on_startup=on_startup, skip_updates=False)
