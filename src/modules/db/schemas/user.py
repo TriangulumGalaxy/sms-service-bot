@@ -144,3 +144,12 @@ async def delete(user_id: int) -> None:
 
     user = await User.query.where(User.user_id == user_id).gino.first()
     await user.delete()
+
+
+async def select_all_admins() -> list:
+    """
+    Возвращает список со всеми админами
+    """
+
+    admins = await User.query.where(User.is_admin == True).gino.all()
+    return admins
