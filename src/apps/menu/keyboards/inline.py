@@ -86,7 +86,7 @@ def chunks(lst: list, chunk_size: int) -> list:
     return res
 
 
-page_callback = CallbackData('pageination', 'page', 'action')
+page_callback = CallbackData('pagination', 'page', 'action')
 service_callback = CallbackData('services', 'name', 'price', 'quantity')
 
 
