@@ -1,5 +1,5 @@
 from aiogram.dispatcher.storage import FSMContext
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import CallbackQuery, InlineKeyboardButton, Message
 from apps.root import dp
 from apps.start.keyboards import (get_countries_and_operators_keyboard,
                                   get_operators_keyboard)
@@ -7,7 +7,8 @@ from modules.api.services import (exceptions, get_balance,
                                   get_country_and_operators, get_number,
                                   get_services_and_cost, get_status,
                                   set_status)
-from modules.db.schemas import user as user_db, sold_numbers as sold_numbers_db
+from modules.db.schemas import sold_numbers as sold_numbers_db
+from modules.db.schemas import user as user_db
 from modules.statistics import json_stats
 
 from ..keyboards.inline import (after_order_menu, back_to_menu_keyboard,
@@ -22,19 +23,27 @@ from ..states.menu import MenuStates
 
 @dp.callback_query_handler(lambda c: ("back_to_menu" in c.data) or (c.data == "bool:no"), state="*")
 async def menu_callback_handler(call: CallbackQuery, state: FSMContext):
-    await call.message.edit_text('Menu', reply_markup=menu_keyboard)
+    kybrd = menu_keyboard
+    if (await user_db.select(call.message.chat.id)).is_admin:
+        kybrd.add(InlineKeyboardButton(
+            "Посмотреть статистику", callback_data="get_statistics"))
+    await call.message.edit_text('Menu', reply_markup=kybrd)
     await state.finish()
 
 
 @dp.message_handler(commands=['menu'], state="*")
 async def menu_cmd(message: Message, state: FSMContext):
-    await message.answer('Menu', reply_markup=menu_keyboard)
+    kybrd = menu_keyboard
+    if (await user_db.select(message.chat.id)).is_admin:
+        kybrd.add(InlineKeyboardButton(
+            "Посмотреть статистику", callback_data="get_statistics"))
+    await message.answer('Menu', reply_markup=kybrd)
 
 
 @dp.callback_query_handler(lambda c: c.data and c.data == "choose_country")
 async def country_choose(call: CallbackQuery):
     await call.message.edit_text('Выберите страну', reply_markup=(await get_countries_and_operators_keyboard(page=1)))
-    await json_stats.update_param('choosed_country')
+    await json_stats.update_param('Этап выбора страны (уже зарегистрирован)')
     await MenuStates.country.set()
 
 
@@ -72,7 +81,7 @@ async def service_choose(call: CallbackQuery):
         await call.message.edit_text('Сначала выберите срану', reply_markup=back_to_menu_keyboard)
         return
     await call.message.edit_text('Service', reply_markup=(await get_services_and_costs_keyboard(country=user.country_id, operator=user.operator)))
-    await json_stats.update_param('choosed_service')
+    await json_stats.update_param('Этап выбора сервиса (уже зарегистрирован)')
     await MenuStates.service.set()
 
 
@@ -127,7 +136,11 @@ async def order_number_callback(call: CallbackQuery, state: FSMContext):
     await user_db.update(user_id, order_id=int(res.split(":")[1]), phone_number=res.split(":")[2])
     await call.message.edit_text(f'Данные вашего заказа:\nНомер:{res.split(":")[2]}', reply_markup=after_order_menu)
     await state.finish()
-    await json_stats.update_param('got_number')
+    await json_stats.update_param('Получил номер  (уже зарегистрирован)')
+
+    # Добавление проданного номера в бд
+    sold_number_user = await user_db.select(user_id)
+    await sold_numbers_db.add(sold_number_user.phone_number, sold_number_user.number_price, sold_number_user.country)
 
 
 @dp.callback_query_handler(text_contains='save_to_favourite')
@@ -162,9 +175,9 @@ async def order_from_favourite_number_callback(call: CallbackQuery, state: FSMCo
     await user_db.update(user_id, order_id=int(res.split(":")[1]), phone_number=res.split(":")[2])
     await call.message.edit_text(f'Данные вашего заказа:\nНомер:{res.split(":")[2]}', reply_markup=after_order_menu)
     await state.finish()
-    
-    await json_stats.update_param('got_number')
-    
+
+    await json_stats.update_param('Получил номер  (уже зарегистрирован)')
+
     # Добавление проданного номера в бд
     sold_number_user = await user_db.select(user_id)
     await sold_numbers_db.add(sold_number_user.phone_number, sold_number_user.number_price, sold_number_user.country)
@@ -178,7 +191,7 @@ async def cancel_number_ordering_callback(call: CallbackQuery, state: FSMContext
         return
     await set_status(id_=order_id, status=8)
     await call.message.edit_text('Отменено', reply_markup=back_to_menu_keyboard)
-    await json_stats.update_param('cancelled_number')
+    await json_stats.update_param('Отменил номер (уже зарегистрирован)')
 
 
 @dp.callback_query_handler(text="end_activation")
@@ -216,7 +229,7 @@ async def check_sms_handler(call: CallbackQuery, state: FSMContext):
         await call.message.edit_text("Ожидаем смс, попробуйте позже!", reply_markup=back_to_menu_keyboard)
     elif "STATUS_OK" in res:
         await call.message.edit_text(f'Код: {res.split(":")[1]}', reply_markup=back_to_menu_keyboard)
-        await json_stats.update_param('got_sms')
+        await json_stats.update_param('Получил смс (уже зарегистрирован)')
     else:
         # print(res)
         await call.message.edit_text('Нет смс', reply_markup=back_to_menu_keyboard)
