@@ -62,6 +62,8 @@ menu.insert(InlineKeyboardButton(
     "Отменить заказ", callback_data="cancel_order"))
 menu.add(InlineKeyboardButton('Заказать из избранного',
                               callback_data="order_from_favourite_number"))
+menu.add(InlineKeyboardButton('Пополнить баланс',
+                              callback_data="deposit_money"))
 menu.add(
     InlineKeyboardButton("Настроить уведомления о балансе",
                          callback_data="balance_limit_notification")

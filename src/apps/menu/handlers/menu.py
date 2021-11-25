@@ -259,3 +259,8 @@ async def check_balance_callback(call: CallbackQuery, state: FSMContext):
 @dp.callback_query_handler(text_contains="ok_and_delete", state="*")
 async def ok_and_delete_callback(call: CallbackQuery, state: FSMContext):
     await call.message.delete()
+
+
+@dp.callback_query_handler(text_contains="deposit_money", state="*")
+async def deposit_money_callbeck(call: CallbackQuery, state: FSMContext):
+    await call.message.answer('Поплнить баланс можно на сайте: https://sms-service-online.com/ru/pay/')
