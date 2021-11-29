@@ -60,10 +60,10 @@ async def get_countries_and_operators_keyboard(page: int):
         return countries_keyboard
 
 
-async def get_operators_keyboard(country_name: str, page: int):
+async def get_operators_keyboard(country_name: str, page: int, api_key: str):
     operators_keyboard = InlineKeyboardMarkup(row_width=3)
 
-    countries_and_operators = await get_country_and_operators()
+    countries_and_operators = await get_country_and_operators(api_key=api_key)
     operators = []
     for country in countries_and_operators:
         if country["name"] == country_name:
