@@ -228,7 +228,7 @@ async def check_sms_handler(call: CallbackQuery, state: FSMContext):
     if 'STATUS_WAIT_CODE' in res:
         await call.message.edit_text("Ожидаем смс, попробуйте позже!", reply_markup=back_to_menu_keyboard)
     elif "STATUS_OK" in res:
-        await call.message.edit_text(f'Код: {res.split(":")[1]}', reply_markup=back_to_menu_keyboard)
+        await call.message.edit_text(f'Код: {res.rstrip("STATUS_CODE:")}', reply_markup=back_to_menu_keyboard)
         await json_stats.update_param('Получил смс (уже зарегистрирован)')
     else:
         # print(res)
