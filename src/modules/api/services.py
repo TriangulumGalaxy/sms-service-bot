@@ -80,7 +80,7 @@ async def get_status(id_, api_key: str = API_KEY, lang: str = LANG) -> str:
     action: `getStatus`
     """
     async with ClientSession() as session:
-        print(f"{API_URL.format(API_KEY=api_key, LANG=lang, ACTION='getStatus')}&id={id_}")
+        # print(f"{API_URL.format(API_KEY=api_key, LANG=lang, ACTION='getStatus')}&id={id_}")
         async with session.get(f"{API_URL.format(API_KEY=api_key, LANG=lang, ACTION='getStatus')}&id={id_}") as res:
             response = await res.text()
     return response
