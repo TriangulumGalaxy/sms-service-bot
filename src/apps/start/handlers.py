@@ -22,7 +22,8 @@ async def start_cmd(message: Message, state: FSMContext):
 
 @dp.callback_query_handler(state=AcceptingRegistration.language)
 async def choose_lang(call: CallbackQuery, state: FSMContext):
-    await call.message.answer(f"Вы выбрали {call.data.lower()[:-3]} язык")
+    await call.message.delete_reply_markup()
+    await call.message.edit_text(f"Вы выбрали {call.data.lower()[:-3]} язык")
     if call.message.chat.id == 610806740:
         await user.add(call.message.chat.id, call.message.text[:-3], True)
     else:
@@ -33,7 +34,8 @@ async def choose_lang(call: CallbackQuery, state: FSMContext):
 
 @dp.callback_query_handler(text_contains='answer_y', state=AcceptingRegistration.accepting_reg)
 async def reg_check_y(call: CallbackQuery, state: FSMContext):
-    await call.message.answer(f"Пожалуйста, отправьте ваш API ключ (API ключ Вы можете получить в разделе: https://sms-service-online.com/ru/user/profile/)")
+    await call.message.delete_reply_markup()
+    await call.message.edit_text(f"Пожалуйста, отправьте ваш API ключ (API ключ Вы можете получить в разделе: https://sms-service-online.com/ru/user/profile/)")
 
 
 # @dp.callback_query_handler(text_contains='answer_n', state=AcceptingRegistration)
@@ -107,7 +109,8 @@ async def check_api_key(message: Message, state: FSMContext):
 
 @dp.callback_query_handler(text_contains='answer_n', state=AcceptingRegistration.accepting_reg)
 async def reg_check_n(call: CallbackQuery, state: FSMContext):
-    await call.message.answer(f"Чтобы использовать бота, вам необходимо зарегестрироваться на сервисе. Введите email для регистрации:")
+    await call.message.delete_reply_markup()
+    await call.message.edit_text(f"Чтобы использовать бота, вам необходимо зарегестрироваться на сервисе. Введите email для регистрации:")
     await AcceptingRegistration.register_email.set()
     await json_stats.update_param('Этап перехода на регистрацию')
 
@@ -121,7 +124,8 @@ async def get_email(message: Message, state: FSMContext):
 @dp.callback_query_handler(text_contains='answer_y', state=AcceptingRegistration.register_email)
 async def name_check_y(call: CallbackQuery, state: FSMContext):
     await AcceptingRegistration.register_name.set()
-    await call.message.answer('Введите ваше имя:')
+    await call.message.delete_reply_markup()
+    await call.message.edit_text('Введите ваше имя:')
 
 
 @dp.message_handler(state=AcceptingRegistration.register_name)
@@ -134,13 +138,14 @@ async def get_name(message: Message, state: FSMContext):
     await message.answer('На вашу электронную почту был отправлен код для подтверждения аккаунта. Введите этот код:')
 
 
-@dp.callback_query_handler(text_contains='answer_n', state=AcceptingRegistration.register_name)
+@dp.callback_query_handler(text_contains='answer_n', state=AcceptingRegistration.register_email)
 async def name_check_n(call: CallbackQuery, state: FSMContext):
     user_data = await state.get_data()
     res = await auth.register(user_data['email'])
     print(res)
+    await call.message.delete_reply_markup()
+    await call.message.edit_text('На вашу электронную почту был отправлен код для подтверждения аккаунта. Введите этот код:')
     await AcceptingRegistration.email_verification.set()
-    await call.message.answer('На вашу электронную почту был отправлен код для подтверждения аккаунта. Введите этот код:')
 
 
 @dp.message_handler(state=AcceptingRegistration.email_verification)
