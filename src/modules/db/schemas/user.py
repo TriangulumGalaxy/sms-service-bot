@@ -26,8 +26,10 @@ class User(db.BaseModel):
     number_price = Column(Float)
     balance_limit = Column(BigInteger, default=0, nullable=False)
     fav_country = Column(String(100))
+    fav_country_id = Column(Integer)
     fav_operator = Column(String(100))
     fav_service = Column(String(100))
+    fav_service_id = Column(Integer)
     created_at = Column(DateTime)
     updated_at = Column(DateTime)
 
@@ -43,7 +45,7 @@ async def select_all() -> list:
     return all_users
 
 
-async def add(user_id: int, lang: str, is_admin: bool = False, api_key: str = None, country_id: int = None, country: str = None, operator: str = None, service: str = None, order_id: int = None, phone_number: str = None, number_price: float = None, balance_limit: int = 0, fav_country: str = None, fav_operator: str = None, fav_service: str = None):
+async def add(user_id: int, lang: str, is_admin: bool = False, api_key: str = None, country_id: int = None, country: str = None, operator: str = None, service: str = None, order_id: int = None, phone_number: str = None, number_price: float = None, balance_limit: int = 0, fav_country: str = None, fav_country_id: int = None, fav_operator: str = None, fav_service: str = None, fav_service_id: int = None):
     """
     Функция для добавления пользователя в бд
 
@@ -60,13 +62,15 @@ async def add(user_id: int, lang: str, is_admin: bool = False, api_key: str = No
     `number_price`: Цена заказанного номера\n
     `balance_limit`: Лимит баланса номера\n
     `fav_country`: Любимая страна номера\n
+    `fav_country_id`: ID любимой страны\n
     `fav_operator`: Любимый оператор\n
-    `fav_service`: Любимый сервис
+    `fav_service`: Любимый сервис\n
+    `fav_service_id`: ID любимого сервиса
     """
 
     try:
         user = User(user_id=user_id, lang=lang, is_admin=is_admin, api_key=api_key, country_id=country_id, country=country,
-                    operator=operator, service=service, order_id=order_id, phone_number=phone_number, number_price=number_price, balance_limit=balance_limit, fav_country=fav_country, fav_operator=fav_operator, fav_service=fav_service, created_at=datetime.now(), updated_at=datetime.now())
+                    operator=operator, service=service, order_id=order_id, phone_number=phone_number, number_price=number_price, balance_limit=balance_limit, fav_country=fav_country, fav_country_id=fav_country_id, fav_operator=fav_operator, fav_service=fav_service, fav_service_id=fav_service_id, created_at=datetime.now(), updated_at=datetime.now())
         await user.create()
     except UniqueViolationError:
         pass
@@ -83,7 +87,7 @@ async def select(user_id: int) -> User:
     return user
 
 
-async def update(user_id: int, lang: str = None, is_admin: bool = None, api_key: str = None, country_id: int = None, country: str = None, operator: str = None, service: str = None, order_id: int = None, phone_number: str = None, number_price: float = None, balance_limit: int = None, fav_country: str = None, fav_operator: str = None, fav_service: str = None) -> None:
+async def update(user_id: int, lang: str = None, is_admin: bool = None, api_key: str = None, country_id: int = None, country: str = None, operator: str = None, service: str = None, order_id: int = None, phone_number: str = None, number_price: float = None, balance_limit: int = None, fav_country: str = None, fav_country_id: int = None, fav_operator: str = None, fav_service: str = None, fav_service_id: int = None) -> None:
     """
     Функция для обновления записи о пользователе в бд
 
@@ -100,8 +104,10 @@ async def update(user_id: int, lang: str = None, is_admin: bool = None, api_key:
     `number_price`: Цена заказанного номера\n
     `balance_limit`: Лимит баланса номера\n
     `fav_country`: Любимая страна номера\n
+    `fav_country_id`: ID любимой страны\n
     `fav_operator`: Любимый оператор\n
-    `fav_service`: Любимый сервис
+    `fav_service`: Любимый сервис\n
+    `fav_service_id`: ID любимого сервиса
     """
 
     user = await User.query.where(User.user_id == user_id).gino.first()
@@ -129,10 +135,14 @@ async def update(user_id: int, lang: str = None, is_admin: bool = None, api_key:
         await user.update(balance_limit=balance_limit, updated_at=datetime.now()).apply()
     if fav_country is not None:
         await user.update(fav_country=fav_country, updated_at=datetime.now()).apply()
+    if fav_country_id is not None:
+        await user.update(fav_country_id=fav_country_id, updated_at=datetime.now()).apply()
     if fav_operator is not None:
         await user.update(fav_operator=fav_operator, updated_at=datetime.now()).apply()
     if fav_service is not None:
         await user.update(fav_service=fav_service, updated_at=datetime.now()).apply()
+    if fav_service_id is not None:
+        await user.update(fav_service_id=fav_service_id, updated_at=datetime.now()).apply()
 
 
 async def delete(user_id: int) -> None:
