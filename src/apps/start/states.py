@@ -7,3 +7,6 @@ class AcceptingRegistration(StatesGroup):
     
     accepting_reg = State()
     language = State()
+    register_email = State()
+    register_name = State()
+    email_verification = State()
