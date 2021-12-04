@@ -25,10 +25,9 @@ langs = (
     "Швейцарский 🇨🇭",
 )
 
-lang_keyboard = ReplyKeyboardMarkup(
-    resize_keyboard=True, row_width=2, one_time_keyboard=True)
+lang_keyboard = InlineKeyboardMarkup(row_width=1)
 for lang in langs:
-    lang_keyboard.insert(KeyboardButton(lang))
+    lang_keyboard.insert(InlineKeyboardButton(lang, callback_data=lang))
 
 boolean_keyboard = InlineKeyboardMarkup(row_width=2)
 boolean_keyboard.insert(InlineKeyboardButton("Да", callback_data="answer_y"))
