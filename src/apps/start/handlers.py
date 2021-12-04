@@ -51,11 +51,11 @@ async def change_page(query: CallbackQuery, callback_data: dict):
         if kybrd:
             await query.message.edit_reply_markup(kybrd)
     elif callback_data["action"] == "op_back":
-        kybrd = await get_operators_keyboard(callback_data["country"], int(callback_data["page"]) - 1)
+        kybrd = await get_operators_keyboard(callback_data["country"], int(callback_data["page"]) - 1, api_key=((await user.select(query.message.chat.id)).api_key))
         if kybrd:
             await query.message.edit_reply_markup(kybrd)
     elif callback_data["action"] == "op_next":
-        kybrd = await get_operators_keyboard(callback_data["country"], int(callback_data["page"]) + 1)
+        kybrd = await get_operators_keyboard(callback_data["country"], int(callback_data["page"]) + 1, api_key=((await user.select(query.message.chat.id)).api_key))
         if kybrd:
             await query.message.edit_reply_markup(kybrd)
     elif callback_data["action"] == "s_back" and int(callback_data['page']) - 1 > 0:
@@ -71,7 +71,7 @@ async def change_page(query: CallbackQuery, callback_data: dict):
 @dp.callback_query_handler(text_contains='country_name', state=AcceptingRegistration)
 async def get_operators(call: CallbackQuery, state: FSMContext):
     await state.update_data(country=call.data[13:])
-    await call.message.answer(f"Выберите оператора:", reply_markup=(await get_operators_keyboard(call.data[13:], 1)))
+    await call.message.answer(f"Выберите оператора:", reply_markup=(await get_operators_keyboard(call.data[13:], 1, api_key=((await user.select(call.message.chat.id)).api_key))))
 
 
 @dp.callback_query_handler(text_contains='operator_name', state=AcceptingRegistration)

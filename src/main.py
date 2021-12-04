@@ -1,6 +1,8 @@
 from aiogram import executor
 from apps import dp, db
 from apps import _filters
+from apps.root import sub
+import asyncio
 
 
 async def flush_all():
@@ -18,12 +20,15 @@ async def connect_db():
     print('Подключение к базе данных...')
     await database.on_startup(dp)
     print('Подключение установлено')
-    await flush_all()
+    # await flush_all()
 
 
 async def on_startup(dp):
     print("bot has started")
     await connect_db()
+    # Creating background processes
+    asyncio.create_task(sub.run_countries_monitoring())
+
 
 def bind_filters(dp, *args):
     """
