@@ -70,25 +70,25 @@ async def change_page(query: CallbackQuery, callback_data: dict):
             await query.message.edit_reply_markup(kybrd)
 
 
-@dp.callback_query_handler(text_contains='country_name', state=AcceptingRegistration)
-async def get_operators(call: CallbackQuery, state: FSMContext):
-    await state.update_data(country=call.data[13:])
-    await call.message.answer(f"Выберите оператора:", reply_markup=(await get_operators_keyboard(call.data[13:], 1, api_key=((await user.select(call.message.chat.id)).api_key))))
-
-
-@dp.callback_query_handler(text_contains='operator_name', state=AcceptingRegistration)
-async def get_services(call: CallbackQuery, state: FSMContext):
-    await state.update_data(operator=call.data[14:])
-    user_data = await state.get_data()
-    country_id = [d['id'] for d in (await get_country_and_operators()) if d['name'] == user_data['country']][0]
-    await call.message.answer(f"Выберите сервис:", reply_markup=(await get_services_keyboard(call.data[14:], country_id, 1)))
-    await json_stats.update_param('Этап выбора сервиса')
-
-
-@dp.callback_query_handler(services_callback.filter(), state=AcceptingRegistration)
-async def answer_services(call: CallbackQuery, state: FSMContext):
-    await call.message.answer("Регистрируйтесь по ссылке: https://sms-service-online.com/ru/register/")
-    await json_stats.update_param('Этап перехода на регистрацию')
+# @dp.callback_query_handler(text_contains='country_name', state=AcceptingRegistration)
+# async def get_operators(call: CallbackQuery, state: FSMContext):
+#     await state.update_data(country=call.data[13:])
+#     await call.message.answer(f"Выберите оператора:", reply_markup=(await get_operators_keyboard(call.data[13:], 1, api_key=((await user.select(call.message.chat.id)).api_key))))
+# 
+# 
+# @dp.callback_query_handler(text_contains='operator_name', state=AcceptingRegistration)
+# async def get_services(call: CallbackQuery, state: FSMContext):
+#     await state.update_data(operator=call.data[14:])
+#     user_data = await state.get_data()
+#     country_id = [d['id'] for d in (await get_country_and_operators()) if d['name'] == user_data['country']][0]
+#     await call.message.answer(f"Выберите сервис:", reply_markup=(await get_services_keyboard(call.data[14:], country_id, 1)))
+#     await json_stats.update_param('Этап выбора сервиса')
+# 
+# 
+# @dp.callback_query_handler(services_callback.filter(), state=AcceptingRegistration)
+# async def answer_services(call: CallbackQuery, state: FSMContext):
+#     await call.message.answer("Регистрируйтесь по ссылке: https://sms-service-online.com/ru/register/")
+#     await json_stats.update_param('Этап перехода на регистрацию')
 
 
 @dp.message_handler(state=AcceptingRegistration.accepting_reg)
