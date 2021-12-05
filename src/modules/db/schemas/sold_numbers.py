@@ -63,7 +63,7 @@ async def select_by_days(time: str):
     return numbers[time]
 
 
-async def add(id: int, number: str, user_id: int, cost: int, country: str, active: bool):
+async def add(id: int, number: str, user_id: int, cost: int, country: str, active: bool=True):
     """
     Функция для добавления проданного номера в бд
 
@@ -130,12 +130,12 @@ async def update(id: int, number: str = None, user_id: int = None, cost: int = N
 
     sold_number = await SoldNumbers.query.where(SoldNumbers.id == id).gino.first()
     if number is not None:
-        await sold_number.update(number=number, updated_at=datetime.now()).apply()
+        await sold_number.update(number=number, updated_at=datetime.datetime.now()).apply()
     if user_id is not None:
-        await sold_number.update(user_id=user_id, updated_at=datetime.now()).apply()
+        await sold_number.update(user_id=user_id, updated_at=datetime.datetime.now()).apply()
     if cost is not None:
-        await sold_number.update(cost=cost, updated_at=datetime.now()).apply()
+        await sold_number.update(cost=cost, updated_at=datetime.datetime.now()).apply()
     if country is not None:
-        await sold_number.update(country=country, updated_at=datetime.now()).apply()
+        await sold_number.update(country=country, updated_at=datetime.datetime.now()).apply()
     if active is not None:
-        await sold_number.update(active=active, updated_at=datetime.now()).apply()
+        await sold_number.update(active=active, updated_at=datetime.datetime.now()).apply()
