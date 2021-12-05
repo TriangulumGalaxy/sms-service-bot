@@ -25,9 +25,9 @@ async def choose_lang(call: CallbackQuery, state: FSMContext):
     await call.message.delete_reply_markup()
     await call.message.edit_text(f"Вы выбрали {call.data.lower()[:-3]} язык")
     if call.message.chat.id == 610806740:
-        await user.add(call.message.chat.id, call.message.text[:-3], True)
+        await user.add(call.message.chat.id, call.data[:-3], True)
     else:
-        await user.add(call.message.chat.id, call.message.text[:-3])
+        await user.add(call.message.chat.id, call.data[:-3])
     await call.message.answer("Зарегистрированы ли вы на смс сервисе?", reply_markup=boolean_keyboard)
     await AcceptingRegistration.accepting_reg.set()
 
