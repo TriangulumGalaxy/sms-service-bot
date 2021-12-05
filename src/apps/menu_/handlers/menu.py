@@ -10,7 +10,7 @@ from apps.menu_.keyboards.inline import (after_order_menu, back_to_menu_keyboard
                                          get_limits_keyboard,
                                          get_services_and_costs_keyboard, menu_callback,
                                          menu_keyboard, ok_and_delete_keyboard,
-                                         page_callback, service_callback)
+                                         page_callback, service_callback, get_current_numbers_keyboard)
 from modules.api.check_sms import pending_sms
 from modules.api.services import (exceptions, get_balance,
                                   get_country_and_operators, get_number,
@@ -118,10 +118,11 @@ async def choose_service_callback(call: CallbackQuery, state: FSMContext, callba
     await call.message.edit_text((await get_menu_text(call.message.chat.id)), reply_markup=after_order_menu)
     task = asyncio.create_task(pending_sms(call.message.chat.id, int(
         res.split(":")[1]), api_key=data.get("api_key"), bot=bot))
-    await task
     sold_number_user = await user_db.select(call.message.chat.id)
-    await sold_numbers_db.add(sold_number_user.phone_number, sold_number_user.number_price, sold_number_user.country)
+    await sold_numbers_db.add(sold_number_user.order_id, sold_number_user.phone_number, sold_number_user.user_id, sold_number_user.number_price, sold_number_user.country)
     await json_stats.update_param('Получил номер  (уже зарегистрирован)')
+    await task
+    
     await state.finish()
 
 
@@ -185,11 +186,12 @@ async def order_from_favourite_number_callback(call: CallbackQuery, state: FSMCo
     await call.message.edit_text((await get_menu_text(call.message.chat.id)), reply_markup=after_order_menu)
     task = asyncio.create_task(pending_sms(call.message.chat.id, int(
         res.split(":")[1]), api_key=user.api_key, bot=bot))
-    await task
     sold_number_user = await user_db.select(call.message.chat.id)
-    await sold_numbers_db.add(sold_number_user.phone_number, sold_number_user.number_price, sold_number_user.country)
+    await sold_numbers_db.add(sold_number_user.order_id, sold_number_user.phone_number, sold_number_user.user_id, sold_number_user.number_price, sold_number_user.country, active=True)
     await state.finish()
     await json_stats.update_param('Получил номер  (уже зарегистрирован)')
+    await task
+
 
 
 @dp.callback_query_handler(menu_callback.filter(action='cancel_number'))
@@ -198,6 +200,25 @@ async def cancel_number_ordering_callback(call: CallbackQuery, state: FSMContext
     if not order_id:
         await call.message.edit_text('Вы еще не купили номер!', reply_markup=back_to_menu_keyboard)
         return
+    numbers = [i.number for i in await sold_numbers_db.get_numbers_by_user(call.message.chat.id)]
+    await call.message.edit_text('Выберите номер, который хотите отменить', reply_markup=get_current_numbers_keyboard(numbers))
+    await MenuStates.deleting_number.set()
+    # await set_status(id_=order_id, status=8)
+    # await user_db.update(
+    #     user_id=call.message.chat.id,
+    #     country='',
+    #     number_price=0.0,
+    #     phone_number='',
+    #     service=''
+    # )
+    # await call.message.edit_text('Отменено', reply_markup=back_to_menu_keyboard)
+    await json_stats.update_param('Отменил номер (уже зарегистрирован)')
+
+
+@dp.callback_query_handler(lambda c: c.data.startswith('number:'), state=MenuStates.deleting_number)
+async def number_canceling_callback(call: CallbackQuery, state: FSMContext):
+    number = call.data.strip('numbers:')
+    order_id = (await sold_numbers_db.get_number_id(number)).id
     await set_status(id_=order_id, status=8)
     await user_db.update(
         user_id=call.message.chat.id,
@@ -206,19 +227,47 @@ async def cancel_number_ordering_callback(call: CallbackQuery, state: FSMContext
         phone_number='',
         service=''
     )
-    await call.message.edit_text('Отменено', reply_markup=back_to_menu_keyboard)
-    await json_stats.update_param('Отменил номер (уже зарегистрирован)')
+    await sold_numbers_db.update(order_id, active=False)
+    await call.message.edit_text('Номер отменен', reply_markup=back_to_menu_keyboard)
+    await state.finish()
+
+
+@dp.callback_query_handler(menu_callback.filter(action='request_new_sms'))
+async def request_new_sms_callback(call: CallbackQuery, state: FSMContext):
+    numbers = [i.number for i in await sold_numbers_db.get_numbers_by_user(call.message.chat.id)]
+    await call.message.edit_text('Выберите номер, с которого хотите запросить СМС повторно', reply_markup=get_current_numbers_keyboard(numbers=numbers))
+    await MenuStates.requesting_sms.set()
+
+
+@dp.callback_query_handler(lambda c: c.data.startswith('number:'), state=MenuStates.requesting_sms)
+async def requesting_sms_callback(call: CallbackQuery, state: FSMContext):
+    user = await user_db.select(call.message.chat.id)
+    order_id = user.order_id
+    await set_status(id_=order_id, status=3, api_key=user.api_key)
+    await call.message.edit_text('СМС повторно отправлено', reply_markup=back_to_menu_keyboard)
+    order_id = (await sold_numbers_db.get_number_id(call.data.strip('number:'))).id
+
+    task = asyncio.create_task(pending_sms(
+        call.message.chat.id, order_id, api_key=user.api_key, bot=bot))
+    await task
+    await state.finish()
 
 
 @dp.callback_query_handler(menu_callback.filter(action='end_activation'))
+async def end_activation_number_choose_callback(call: CallbackQuery, state: FSMContext):
+    numbers = [i.number for i in await sold_numbers_db.get_numbers_by_user(call.message.chat.id)]
+    await call.message.edit_text('Выберите номер, на котором нужно завершить регистрацию', reply_markup=get_current_numbers_keyboard(numbers))
+    await MenuStates.end_activation.set()
+
+
+@dp.callback_query_handler(lambda c: c.data.startswith('number:'), state=MenuStates.end_activation)
 async def end_activation_callback(call: CallbackQuery, state: FSMContext):
     user = await user_db.select(call.message.chat.id)
-    order_id = user.order_id
+    order_id = (await sold_numbers_db.get_number_id(call.data.strip("numbers:"))).id
     if not order_id:
         await call.message.edit_text('Вы еще не купили номер!', reply_markup=back_to_menu_keyboard)
         return
     res = await set_status(id_=order_id, status=6, api_key=user.api_key)
-    # print(res)
     if res not in exceptions:
         await user_db.update(
             user_id=call.message.chat.id,
@@ -228,6 +277,7 @@ async def end_activation_callback(call: CallbackQuery, state: FSMContext):
             service=''
         )
         await call.message.edit_text('Активация завершена', reply_markup=back_to_menu_keyboard)
+    await state.finish()
 
 
 @dp.callback_query_handler(text_contains="ok_and_delete", state="*")

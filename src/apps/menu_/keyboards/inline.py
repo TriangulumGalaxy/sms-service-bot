@@ -11,7 +11,8 @@ menu_buttons = {
     "Уведомления о балансе": "balance_notifications",
     "Уведомления о новых сервисах": "services_notifications",
     "Уведомления о новых странах": "countries_notifications",
-    "Мои номера": "my_numbers",
+    "Запросить ещё одну СМС": "request_new_sms",
+    # "Мои номера": "my_numbers",
     "Посмотреть статистику": "statistics",
     "Завершить активацию": "end_activation",
 }
@@ -94,4 +95,20 @@ async def get_limits_keyboard(limits: list = [
     for i in limits:
         keyboard.insert(InlineKeyboardButton(
             f"{i} RUB", callback_data=f"set_limit:{i}"))
+    return keyboard
+
+
+def get_current_numbers_keyboard(numbers: list) -> InlineKeyboardMarkup:
+    """Returns an inline keyboard with all numbers
+
+    Args:
+        numbers (list): list of numbers for buttons
+
+    Returns:
+        InlineKeyboardMarkup with Inline
+    """
+    keyboard = InlineKeyboardMarkup(row_width=1)
+    print(numbers)
+    keyboard.add(*[InlineKeyboardButton(str(number),
+                                        callback_data=f"number:{str(number)}") for number in numbers])
     return keyboard
