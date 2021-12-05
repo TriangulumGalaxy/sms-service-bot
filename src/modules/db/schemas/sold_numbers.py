@@ -12,8 +12,9 @@ class SoldNumbers(db.BaseModel):
 
     __tablename__ = 'SoldNumbers'
 
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    id = Column(BigInteger, primary_key=True)
     number = Column(String(100))
+    user_id = Column(BigInteger)
     cost = Column(BigInteger)
     country = Column(String(100))
     created_at = Column(DateTime)
@@ -39,12 +40,14 @@ async def select_by_days(time: str):
 
     today = datetime.datetime.today()
     yesterday = today - datetime.timedelta(days=1)
-    last_week_start = today - datetime.timedelta(days=today.weekday()) - relativedelta(weeks=1)
+    last_week_start = today - \
+        datetime.timedelta(days=today.weekday()) - relativedelta(weeks=1)
     last_week_end = last_week_start + datetime.timedelta(days=6)
     last_fourteen_days = today - datetime.timedelta(days=14)
     last_thirty_days = today - datetime.timedelta(days=30)
     last_month_start = today.replace(day=1) - relativedelta(months=1)
-    last_month_end = last_month_start + relativedelta(months=1) - datetime.timedelta(days=1)
+    last_month_end = last_month_start + \
+        relativedelta(months=1) - datetime.timedelta(days=1)
 
     numbers = {
         'За сегодня': (await SoldNumbers.query.where(SoldNumbers.created_at >= today).order_by(SoldNumbers.country).gino.all()),
@@ -58,24 +61,37 @@ async def select_by_days(time: str):
     return numbers[time]
 
 
-async def add(number: str, cost: int, country: str):
+async def add(id: int, number: str, user_id: int, cost: int, country: str):
     """
     Функция для добавления проданного номера в бд
 
+    `id`: ID заказа номера\n
     `number`: Проданный номер\n
+    `user_id`: ID пользователя, купившего номер\n
     `cost`: Стоимость проданного номера\n
     `country`: Страна номера
     """
 
     try:
         sold_number = SoldNumbers(
-            number=number, cost=cost, country=country, created_at=datetime.datetime.now())
+            id=id, number=number, user_id=user_id, cost=cost, country=country, created_at=datetime.datetime.now())
         await sold_number.create()
     except UniqueViolationError:
         pass
 
 
-async def select(number: int) -> SoldNumbers:
+async def select(id: int) -> SoldNumbers:
+    """
+    Возвращает запись, которую находит по ID заказа телефонного номера
+
+    `id`: ID заказа номера
+    """
+
+    sold_number = await SoldNumbers.query.where(SoldNumbers.id == id).gino.first()
+    return sold_number
+
+
+async def get_number_id(number: int) -> SoldNumbers:
     """
     Возвращает запись, которую находит по телефонному номеру
 
