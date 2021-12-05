@@ -17,7 +17,7 @@ class SoldNumbers(db.BaseModel):
     user_id = Column(BigInteger)
     cost = Column(BigInteger)
     country = Column(String(100))
-    active = Boolean()
+    active = Column(Boolean)
     updated_at = Column(DateTime)
     created_at = Column(DateTime)
 
