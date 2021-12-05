@@ -1,4 +1,4 @@
-from sqlalchemy import sql, Column, BigInteger, String, DateTime, Integer
+from sqlalchemy import sql, Column, BigInteger, String, DateTime, Boolean
 from asyncpg import UniqueViolationError
 import datetime
 from dateutil.relativedelta import *
@@ -17,6 +17,8 @@ class SoldNumbers(db.BaseModel):
     user_id = Column(BigInteger)
     cost = Column(BigInteger)
     country = Column(String(100))
+    active = Boolean()
+    updated_at = Column(DateTime)
     created_at = Column(DateTime)
 
     query: sql.Select
@@ -61,7 +63,7 @@ async def select_by_days(time: str):
     return numbers[time]
 
 
-async def add(id: int, number: str, user_id: int, cost: int, country: str):
+async def add(id: int, number: str, user_id: int, cost: int, country: str, active: bool):
     """
     Функция для добавления проданного номера в бд
 
@@ -69,12 +71,13 @@ async def add(id: int, number: str, user_id: int, cost: int, country: str):
     `number`: Проданный номер\n
     `user_id`: ID пользователя, купившего номер\n
     `cost`: Стоимость проданного номера\n
-    `country`: Страна номера
+    `country`: Страна номера\n
+    `active`: Активен ли номер
     """
 
     try:
         sold_number = SoldNumbers(
-            id=id, number=number, user_id=user_id, cost=cost, country=country, created_at=datetime.datetime.now())
+            id=id, number=number, user_id=user_id, cost=cost, country=country, active=active, updated_at=datetime.datetime.now(), created_at=datetime.datetime.now())
         await sold_number.create()
     except UniqueViolationError:
         pass
@@ -111,3 +114,28 @@ async def get_numbers_by_user(user_id: int) -> list:
 
     sold_numbers = await SoldNumbers.query.where(SoldNumbers.user_id == user_id).gino.all()
     return sold_numbers
+
+
+async def update(id: int, number: str = None, user_id: int = None, cost: int = None, country: str = None, active: bool = None) -> None:
+    """
+    Функция для обновления записи о номере в бд
+
+    `id`: ID заказа номера\n
+    `number`: Проданный номер\n
+    `user_id`: ID пользователя, купившего номер\n
+    `cost`: Стоимость проданного номера\n
+    `country`: Страна номера\n
+    `active`: Активен ли номер
+    """
+
+    sold_number = await SoldNumbers.query.where(SoldNumbers.id == id).gino.first()
+    if number is not None:
+        await sold_number.update(number=number, updated_at=datetime.now()).apply()
+    if user_id is not None:
+        await sold_number.update(user_id=user_id, updated_at=datetime.now()).apply()
+    if cost is not None:
+        await sold_number.update(cost=cost, updated_at=datetime.now()).apply()
+    if country is not None:
+        await sold_number.update(country=country, updated_at=datetime.now()).apply()
+    if active is not None:
+        await sold_number.update(active=active, updated_at=datetime.now()).apply()
