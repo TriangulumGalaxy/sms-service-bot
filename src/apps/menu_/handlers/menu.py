@@ -1,7 +1,7 @@
 import asyncio
 
 from aiogram.dispatcher.storage import FSMContext
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import CallbackQuery, Message, InlineKeyboardButton
 from apps.root import bot, dp, sub
 from apps.start.keyboards import (get_countries_and_operators_keyboard,
                                   get_operators_keyboard)
@@ -17,6 +17,7 @@ from modules.api.services import (exceptions, get_balance,
                                   get_services_and_cost, set_status)
 from modules.db.schemas import sold_numbers as sold_numbers_db
 from modules.db.schemas import user as user_db
+from modules.statistics import json_stats
 from apps.menu_.states.menu import MenuStates
 
 
@@ -34,9 +35,9 @@ async def get_menu_text(user_id: int) -> str:
 @dp.callback_query_handler(lambda c: ("back_to_menu" in c.data) or (c.data == "bool:no"), state="*")
 async def menu_callback_handler(call: CallbackQuery, state: FSMContext):
     kybrd = menu_keyboard
-    # if (await user_db.select(call.message.chat.id)).is_admin:
-    #     kybrd.add(InlineKeyboardButton(
-    #         "Посмотреть статистику", callback_data="get_statistics"))
+    if (await user_db.select(call.message.chat.id)).is_admin:
+        kybrd.add(InlineKeyboardButton(
+            "Посмотреть статистику", callback_data="get_statistics"))
     await call.message.edit_text((await get_menu_text(call.message.chat.id)), reply_markup=kybrd)
     await state.finish()
 
@@ -52,6 +53,7 @@ async def buy_number_callback(call: CallbackQuery, state: FSMContext):
     api_key = (await user_db.select(call.message.chat.id)).api_key
     await state.update_data({'api_key': api_key})
     await MenuStates.country.set()
+    await json_stats.update_param('Этап выбора страны (уже зарегистрирован)')
 
 
 @dp.callback_query_handler(text_contains="country_name", state=MenuStates.country)
@@ -75,6 +77,7 @@ async def operator_callback(call: CallbackQuery, state: FSMContext):
     data.update({"operator": operator})
     await state.update_data(data)
     await MenuStates.service.set()
+    await json_stats.update_param('Этап выбора сервиса (уже зарегистрирован)')
 
 
 @dp.callback_query_handler(service_callback.filter(), state=MenuStates.service)
@@ -118,6 +121,7 @@ async def choose_service_callback(call: CallbackQuery, state: FSMContext, callba
     await task
     sold_number_user = await user_db.select(call.message.chat.id)
     await sold_numbers_db.add(sold_number_user.phone_number, sold_number_user.number_price, sold_number_user.country)
+    await json_stats.update_param('Получил номер  (уже зарегистрирован)')
     await state.finish()
 
 
@@ -185,6 +189,7 @@ async def order_from_favourite_number_callback(call: CallbackQuery, state: FSMCo
     sold_number_user = await user_db.select(call.message.chat.id)
     await sold_numbers_db.add(sold_number_user.phone_number, sold_number_user.number_price, sold_number_user.country)
     await state.finish()
+    await json_stats.update_param('Получил номер  (уже зарегистрирован)')
 
 
 @dp.callback_query_handler(menu_callback.filter(action='cancel_number'))
@@ -202,7 +207,7 @@ async def cancel_number_ordering_callback(call: CallbackQuery, state: FSMContext
         service=''
     )
     await call.message.edit_text('Отменено', reply_markup=back_to_menu_keyboard)
-    # await json_stats.update_param('Отменил номер (уже зарегистрирован)')
+    await json_stats.update_param('Отменил номер (уже зарегистрирован)')
 
 
 @dp.callback_query_handler(menu_callback.filter(action='end_activation'))
@@ -232,7 +237,7 @@ async def ok_and_delete_callback(call: CallbackQuery, state: FSMContext):
 
 @dp.callback_query_handler(menu_callback.filter(action='pay_balance'), state="*")
 async def deposit_money_callbeck(call: CallbackQuery, state: FSMContext):
-    await call.message.answer('Поплнить баланс можно на сайте: https://sms-service-online.com/ru/pay/')
+    await call.message.answer('Пополнить баланс можно на сайте: https://sms-service-online.com/ru/pay/')
 
 
 @dp.callback_query_handler(menu_callback.filter(action='balance_notifications'))

@@ -1,5 +1,6 @@
 from aiogram.bot.bot import Bot
 from .services import get_status
+from modules.statistics import json_stats
 
 
 async def wait_for_sms(order_id: int, api_key: str) -> str:
@@ -8,6 +9,7 @@ async def wait_for_sms(order_id: int, api_key: str) -> str:
         if "STATUS_CANCEL" in res:
             return "STATUS_CANCEL"
         elif "STATUS_OK" in res:
+            await json_stats.update_param('Получил смс (уже зарегистрирован)')
             return res.strip("STATUS_OK:")
         elif "STATUS_WAIT_CODE" in res:
             continue
