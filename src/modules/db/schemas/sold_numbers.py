@@ -94,14 +94,14 @@ async def select(id: int) -> SoldNumbers:
     return sold_number
 
 
-async def get_number_id(number: int) -> SoldNumbers:
+async def get_number_id(number: str) -> SoldNumbers:
     """
     Возвращает запись, которую находит по телефонному номеру
 
     `number`: Проданный номер
     """
 
-    sold_number = await SoldNumbers.query.where(SoldNumbers.country == number).gino.first()
+    sold_number = await SoldNumbers.query.where(SoldNumbers.number == number).gino.first()
     return sold_number
 
 
