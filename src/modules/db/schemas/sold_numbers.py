@@ -63,7 +63,7 @@ async def select_by_days(time: str):
     return numbers[time]
 
 
-async def add(id: int, number: str, user_id: int, cost: int, country: str, active: bool):
+async def add(id: int, number: str, user_id: int, cost: int, country: str, active: bool = True):
     """
     Функция для добавления проданного номера в бд
 
