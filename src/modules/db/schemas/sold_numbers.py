@@ -100,3 +100,14 @@ async def get_number_id(number: int) -> SoldNumbers:
 
     sold_number = await SoldNumbers.query.where(SoldNumbers.country == number).gino.first()
     return sold_number
+
+
+async def get_numbers_by_user(user_id: int) -> list:
+    """
+    Возвращает записи о купленных номерах одного пользователя
+
+    `user_id`: ID пользователя
+    """
+
+    sold_numbers = await SoldNumbers.query.where(SoldNumbers.user_id == user_id).gino.all()
+    return sold_numbers
