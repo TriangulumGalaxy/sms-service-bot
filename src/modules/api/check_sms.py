@@ -1,3 +1,4 @@
+import asyncio
 from aiogram.bot.bot import Bot
 from .services import get_status
 from modules.statistics import json_stats
@@ -19,7 +20,10 @@ async def wait_for_sms(order_id: int, api_key: str) -> str:
 
 async def pending_sms(user_id: int, order_id: int, api_key: str, bot: Bot):
     res = await wait_for_sms(order_id, api_key)
-    if res == "ERROR_API":
-        await bot.send_message(user_id, 'Произошла ошибка на сервере, или вы отменили номер, попробуйте еще раз!')
+    if res == "STATUS_CANCEL":
+        await bot.send_message(user_id, "Вы отменили номер")
+        asyncio.get_event_loop().close()
+    elif res == "ERROR_API":
+        await bot.send_message(user_id, 'Произошла ошибка на сервере, пробуйте еще раз!')
     elif not res == "STATUS_CANCEL":
         await bot.send_message(user_id, res)
