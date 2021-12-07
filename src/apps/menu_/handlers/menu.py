@@ -22,14 +22,22 @@ from apps.menu_.states.menu import MenuStates
 
 
 async def get_menu_text(user_id: int) -> str:
-    menu_body = 'Баланс: {balance}\n' \
-        'Номер телефона: {phone}\n' \
-        'Сервис: {service}\n' \
-        'Страна: {country}\n' \
-        'Цена: {price}\n'
+    numbers = await sold_numbers_db.get_active_numbers(user_id)
     user = await user_db.select(user_id)
     balance = await get_balance(user.api_key)
-    return menu_body.format(balance=balance, phone=user.phone_number, service=user.service, country=user.country, price=user.number_price)
+    menu_txt = f"Баланс: {balance}\n"
+    for number in numbers:
+        menu_txt += f"Номер: {number.number}\n" \
+            f"Страна: {number.country}\n" \
+            f"Цена: {number.cost}\n" \
+            # menu_body = 'Баланс: {balance}\n' \
+            # 'Номера телефона: {phone}\n' \
+            # 'Сервис: {service}\n' \
+            # 'Страна: {country}\n' \
+            # 'Цена: {price}\n'
+    balance = await get_balance(user.api_key)
+    # return menu_body.format(balance=balance, phone=user.phone_number, service=user.service, country=user.country, price=user.number_price)
+    return menu_txt
 
 
 @dp.callback_query_handler(lambda c: ("back_to_menu" in c.data) or (c.data == "bool:no"), state="*")
@@ -122,7 +130,7 @@ async def choose_service_callback(call: CallbackQuery, state: FSMContext, callba
     await sold_numbers_db.add(sold_number_user.order_id, sold_number_user.phone_number, sold_number_user.user_id, sold_number_user.number_price, sold_number_user.country)
     await json_stats.update_param('Получил номер  (уже зарегистрирован)')
     await task
-    
+
     await state.finish()
 
 
@@ -193,14 +201,13 @@ async def order_from_favourite_number_callback(call: CallbackQuery, state: FSMCo
     await task
 
 
-
 @dp.callback_query_handler(menu_callback.filter(action='cancel_number'))
 async def cancel_number_ordering_callback(call: CallbackQuery, state: FSMContext):
     order_id = (await user_db.select(call.message.chat.id)).order_id
     if not order_id:
         await call.message.edit_text('Вы еще не купили номер!', reply_markup=back_to_menu_keyboard)
         return
-    numbers = [i.number for i in await sold_numbers_db.get_numbers_by_user(call.message.chat.id)]
+    numbers = [i.number for i in await sold_numbers_db.get_active_numbers(call.message.chat.id)]
     await call.message.edit_text('Выберите номер, который хотите отменить', reply_markup=get_current_numbers_keyboard(numbers))
     await MenuStates.deleting_number.set()
     # await set_status(id_=order_id, status=8)
@@ -219,7 +226,8 @@ async def cancel_number_ordering_callback(call: CallbackQuery, state: FSMContext
 async def number_canceling_callback(call: CallbackQuery, state: FSMContext):
     number = call.data.strip('numbers:')
     order_id = (await sold_numbers_db.get_number_id(number)).id
-    await set_status(id_=order_id, status=8)
+    user = await user_db.select(call.message.chat.id)
+    await set_status(id_=order_id, status=8, api_key=user.api_key)
     await user_db.update(
         user_id=call.message.chat.id,
         country='',
@@ -234,7 +242,7 @@ async def number_canceling_callback(call: CallbackQuery, state: FSMContext):
 
 @dp.callback_query_handler(menu_callback.filter(action='request_new_sms'))
 async def request_new_sms_callback(call: CallbackQuery, state: FSMContext):
-    numbers = [i.number for i in await sold_numbers_db.get_numbers_by_user(call.message.chat.id)]
+    numbers = [i.number for i in await sold_numbers_db.get_active_numbers(call.message.chat.id)]
     await call.message.edit_text('Выберите номер, с которого хотите запросить СМС повторно', reply_markup=get_current_numbers_keyboard(numbers=numbers))
     await MenuStates.requesting_sms.set()
 
@@ -255,7 +263,7 @@ async def requesting_sms_callback(call: CallbackQuery, state: FSMContext):
 
 @dp.callback_query_handler(menu_callback.filter(action='end_activation'))
 async def end_activation_number_choose_callback(call: CallbackQuery, state: FSMContext):
-    numbers = [i.number for i in await sold_numbers_db.get_numbers_by_user(call.message.chat.id)]
+    numbers = [i.number for i in await sold_numbers_db.get_active_numbers(call.message.chat.id)]
     await call.message.edit_text('Выберите номер, на котором нужно завершить регистрацию', reply_markup=get_current_numbers_keyboard(numbers))
     await MenuStates.end_activation.set()
 
