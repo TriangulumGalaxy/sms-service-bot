@@ -139,3 +139,12 @@ async def update(id: int, number: str = None, user_id: int = None, cost: int = N
         await sold_number.update(country=country, updated_at=datetime.datetime.now()).apply()
     if active is not None:
         await sold_number.update(active=active, updated_at=datetime.datetime.now()).apply()
+
+
+async def get_active_numbers(user_id: int):
+    """
+    Возвращает активные номера
+    """
+    
+    active_numbers = await SoldNumbers.query.where((SoldNumbers.active == True) & (SoldNumbers.user_id == user_id)).gino.all()
+    return active_numbers
